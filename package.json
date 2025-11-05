@@ -1,0 +1,25 @@
+{
+  "name": "apartamento-airbnb-management",
+  "version": "0.1.0",
+  "description": "Sistema de gestión de apartamentos en alquiler vacacional",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"cd backend && npm run start:dev\" \"cd frontend && npm run dev\"",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "backend:dev": "cd backend && npm run start:dev",
+    "frontend:dev": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "keywords": [
+    "airbnb",
+    "property-management",
+    "rental",
+    "accounting"
+  ]
+}
