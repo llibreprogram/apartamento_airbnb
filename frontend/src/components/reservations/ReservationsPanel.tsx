@@ -401,30 +401,62 @@ export function ReservationsPanel() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        {res.status === 'pending' && (
-                          <button
-                            onClick={() => handleStatusChange(res.id, 'confirmed')}
-                            className="text-blue-500 hover:text-blue-700 font-semibold text-sm"
-                          >
-                            Confirmar
-                          </button>
-                        )}
-                        {res.status === 'confirmed' && (
-                          <button
-                            onClick={() => handleStatusChange(res.id, 'completed')}
-                            className="text-green-500 hover:text-green-700 font-semibold text-sm"
-                          >
-                            Completar
-                          </button>
-                        )}
-                        {(res.status === 'pending' || res.status === 'confirmed') && (
-                          <button
-                            onClick={() => handleStatusChange(res.id, 'cancelled')}
-                            className="text-red-500 hover:text-red-700 font-semibold text-sm ml-2"
-                          >
-                            Cancelar
-                          </button>
-                        )}
+                        <div className="flex gap-2 flex-wrap">
+                          {res.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(res.id, 'confirmed')}
+                                className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded font-semibold transition"
+                                title="Confirmar esta reserva"
+                              >
+                                ✓ Confirmar
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm('¿Cancelar esta reserva?')) {
+                                    handleStatusChange(res.id, 'cancelled');
+                                  }
+                                }}
+                                className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded font-semibold transition"
+                                title="Cancelar esta reserva"
+                              >
+                                ✕ Cancelar
+                              </button>
+                            </>
+                          )}
+                          {res.status === 'confirmed' && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(res.id, 'completed')}
+                                className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded font-semibold transition"
+                                title="Marcar como completada"
+                              >
+                                ✓ Completar
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm('¿Cancelar esta reserva?')) {
+                                    handleStatusChange(res.id, 'cancelled');
+                                  }
+                                }}
+                                className="px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded font-semibold transition"
+                                title="Cancelar esta reserva"
+                              >
+                                ✕ Cancelar
+                              </button>
+                            </>
+                          )}
+                          {res.status === 'completed' && (
+                            <span className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded font-semibold cursor-not-allowed">
+                              ✓ Completada
+                            </span>
+                          )}
+                          {res.status === 'cancelled' && (
+                            <span className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded font-semibold cursor-not-allowed">
+                              ✕ Cancelada
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
