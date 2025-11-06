@@ -274,8 +274,7 @@ export const SeasonalPricingPanel: React.FC<SeasonalPricingPanelProps> = ({
 
       {/* Form */}
       {showForm && (
-        <form
-          onSubmit={handleSubmit}
+        <div
           className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -404,7 +403,8 @@ export const SeasonalPricingPanel: React.FC<SeasonalPricingPanelProps> = ({
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition disabled:bg-gray-400"
               disabled={loading}
             >
@@ -415,7 +415,7 @@ export const SeasonalPricingPanel: React.FC<SeasonalPricingPanelProps> = ({
                   : 'Crear Precio'}
             </button>
           </div>
-        </form>
+        </div>
       )}
 
       {/* Prices List */}
