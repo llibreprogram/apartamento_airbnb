@@ -63,8 +63,8 @@ export class FinancialsService {
 
     const totalExpenses = parseFloat(expensesResult?.total || 0);
 
-    // 3. Calcular comisión (10% del ingreso bruto)
-    const commissionRate = 0.1; // 10%
+    // 3. Calcular comisión usando la tasa de la propiedad
+    const commissionRate = parseFloat(property.commissionRate?.toString() || '0.1');
     const commissionAmount = parseFloat((grossIncome * commissionRate).toFixed(2));
 
     // 4. Calcular ganancias netas

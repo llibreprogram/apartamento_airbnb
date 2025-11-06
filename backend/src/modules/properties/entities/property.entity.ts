@@ -66,6 +66,9 @@ export class Property {
   @Column({ type: 'boolean', default: true })
   isAvailable: boolean;
 
+  @Column({ type: 'decimal', precision: 5, scale: 3, default: 0.1 })
+  commissionRate: number; // Comisión de la propiedad (ej: 0.1 = 10%)
+
   @Column({ type: 'uuid' })
   ownerId: string;
 

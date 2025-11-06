@@ -62,6 +62,11 @@ export class CreatePropertyDto {
   @IsArray()
   @IsOptional()
   photos: string[];
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  commissionRate: number; // Comisión de la propiedad (ej: 0.1 = 10%, default 0.1)
 }
 
 export class UpdatePropertyDto {
@@ -120,4 +125,9 @@ export class UpdatePropertyDto {
   @IsString()
   @IsOptional()
   isAvailable: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  commissionRate: number; // Comisión de la propiedad (ej: 0.1 = 10%)
 }

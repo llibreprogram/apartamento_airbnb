@@ -12,6 +12,7 @@ interface Property {
   bathrooms: number;
   capacity: number;
   pricePerNight: number;
+  commissionRate?: number;
   isAvailable: boolean;
   createdAt: string;
 }
@@ -54,7 +55,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ onRefresh }) =
 
   useEffect(() => {
     fetchProperties(1, cityFilter);
-  }, [cityFilter]);
+  }, []);
 
   const handleCityFilter = (city: string) => {
     setCityFilter(city);
@@ -143,6 +144,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ onRefresh }) =
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tipo</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Habitaciones</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Precio/Noche</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Comisión</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Estado</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
             </tr>
@@ -150,7 +152,7 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ onRefresh }) =
           <tbody>
             {properties.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                   No hay propiedades. ¡Crea una nueva!
                 </td>
               </tr>
@@ -162,6 +164,9 @@ export const PropertiesTable: React.FC<PropertiesTableProps> = ({ onRefresh }) =
                   <td className="px-6 py-4 text-gray-600 capitalize">{prop.type}</td>
                   <td className="px-6 py-4 text-gray-600">{prop.bedrooms}</td>
                   <td className="px-6 py-4 font-semibold text-green-600">${prop.pricePerNight}</td>
+                  <td className="px-6 py-4 font-semibold text-blue-600">
+                    {((prop.commissionRate || 0.1) * 100).toFixed(1)}%
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       prop.isAvailable
