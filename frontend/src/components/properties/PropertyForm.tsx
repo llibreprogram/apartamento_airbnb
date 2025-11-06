@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '@/services/api';
+import { SeasonalPricingPanel } from './SeasonalPricingPanel';
 
 interface PropertyFormProps {
   propertyId?: string | null;
@@ -19,6 +20,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, onClose 
     capacity: 1,
     pricePerNight: 0,
     securityDeposit: 0,
+    commissionRate: 0.1, // 10% por defecto
     amenities: '',
     photos: '',
   });
@@ -29,26 +31,46 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, onClose 
 
   useEffect(() => {
     if (propertyId) {
-      const fetchProperty = async () => {
-        try {
-          const response = await apiClient.get(`/properties/${propertyId}`);
-          setFormData(response.data);
-        } catch (err: any) {
-          setErrors({ submit: 'Error al cargar propiedad' });
-        }
-      };
       fetchProperty();
     }
   }, [propertyId]);
+
+  const fetchProperty = async () => {
+    try {
+      const response = await apiClient.get(`/properties/${propertyId}`);
+      const data = response.data;
+      
+      // Convertir arrays a strings para los inputs
+      const propertyData = {
+        name: data.name || '',
+        description: data.description || '',
+        address: data.address || '',
+        city: data.city || '',
+        zipCode: data.zipCode || '',
+        type: data.type || 'apartment',
+        bedrooms: data.bedrooms || 1,
+        bathrooms: data.bathrooms || 1,
+        capacity: data.capacity || 1,
+        pricePerNight: data.pricePerNight || 0,
+        securityDeposit: data.securityDeposit || 0,
+        commissionRate: data.commissionRate || 0.1,
+        amenities: Array.isArray(data.amenities) ? data.amenities.join(', ') : (data.amenities || ''),
+        photos: Array.isArray(data.photos) ? data.photos.join(', ') : (data.photos || ''),
+      };
+      setFormData(propertyData);
+    } catch (err: any) {
+      setErrors({ submit: 'Error al cargar propiedad' });
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: name === 'bedrooms' || name === 'bathrooms' || name === 'capacity'
-        ? parseInt(value)
-        : name === 'pricePerNight' || name === 'securityDeposit'
-        ? parseFloat(value)
+        ? parseInt(value) || 0
+        : name === 'pricePerNight' || name === 'securityDeposit' || name === 'commissionRate'
+        ? parseFloat(value) || 0
         : value,
     }));
     if (errors[name]) {
@@ -79,8 +101,20 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, onClose 
     setSuccess(false);
 
     try {
+      // Asegurar que todos los números sean numbers, no strings
       const payload = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+        type: formData.type,
+        bedrooms: Number(formData.bedrooms),
+        bathrooms: Number(formData.bathrooms),
+        capacity: Number(formData.capacity),
+        pricePerNight: Number(formData.pricePerNight),
+        securityDeposit: Number(formData.securityDeposit),
+        commissionRate: Number(formData.commissionRate) || 0.1,
         amenities: formData.amenities.split(',').map(a => a.trim()).filter(a => a),
         photos: formData.photos.split(',').map(p => p.trim()).filter(p => p),
       };
@@ -272,6 +306,27 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, onClose 
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
             </div>
+
+            {/* Commission Rate */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">
+                Comisión (decimal, ej: 0.1 = 10%)
+              </label>
+              <input
+                type="number"
+                name="commissionRate"
+                value={formData.commissionRate}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                max="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                placeholder="0.1"
+              />
+              <p className="text-gray-500 text-xs mt-1">
+                {((formData.commissionRate || 0) * 100).toFixed(1)}% de comisión
+              </p>
+            </div>
           </div>
 
           {/* Address */}
@@ -368,6 +423,14 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({ propertyId, onClose 
               {loading ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
+
+          {/* Seasonal Pricing Panel - Only show if editing existing property */}
+          {propertyId && (
+            <SeasonalPricingPanel 
+              propertyId={propertyId} 
+              basePrice={formData.pricePerNight}
+            />
+          )}
         </form>
       </div>
     </div>
