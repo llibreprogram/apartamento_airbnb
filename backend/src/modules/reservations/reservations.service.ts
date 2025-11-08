@@ -83,14 +83,19 @@ export class ReservationsService {
       );
     }
 
-    // Calcular precio total usando precios dinámicos
-    const totalPrice = await this.calculateTotalPrice(propertyId, checkIn, checkOut);
+    // Calcular precio total usando precios dinámicos SOLO si no se proporciona
+    let totalPrice = createReservationDto.totalPrice;
+    
+    // Si no se proporciona precio o es 0, calcular automáticamente
+    if (!totalPrice || totalPrice === 0) {
+      totalPrice = await this.calculateTotalPrice(propertyId, checkIn, checkOut);
+    }
 
     const reservation = this.reservationsRepository.create({
       ...createReservationDto,
       guestId,
       status: ReservationStatus.PENDING,
-      totalPrice, // Usar precio calculado con lógica dinámica
+      totalPrice, // Usar precio proporcionado o calculado
     });
 
     return this.reservationsRepository.save(reservation);
@@ -210,13 +215,15 @@ export class ReservationsService {
         );
       }
 
-      // Recalcular precio total con las nuevas fechas
-      const totalPrice = await this.calculateTotalPrice(
-        reservation.propertyId,
-        checkIn,
-        checkOut,
-      );
-      updateReservationDto.totalPrice = totalPrice;
+      // Recalcular precio total SOLO si no se proporciona en el DTO
+      if (!updateReservationDto.totalPrice || updateReservationDto.totalPrice === 0) {
+        const totalPrice = await this.calculateTotalPrice(
+          reservation.propertyId,
+          checkIn,
+          checkOut,
+        );
+        updateReservationDto.totalPrice = totalPrice;
+      }
     }
 
     Object.assign(reservation, updateReservationDto);

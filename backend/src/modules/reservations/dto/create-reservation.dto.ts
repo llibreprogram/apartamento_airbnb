@@ -62,9 +62,9 @@ export class CreateReservationDto {
   numberOfGuests: number;
 
   @IsNumber()
-  @Min(1)
-  @IsNotEmpty()
-  totalPrice: number;
+  @Min(0)
+  @IsOptional()
+  totalPrice?: number;
 
   @IsNumber()
   @Min(0)

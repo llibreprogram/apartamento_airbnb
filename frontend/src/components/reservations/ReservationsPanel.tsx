@@ -743,8 +743,8 @@ export function ReservationsPanel() {
                   Precio Total ($) * 
                   <span className="text-xs font-normal text-gray-500 ml-2">
                     {formData.checkIn && formData.checkOut && formData.propertyId ? 
-                      `(Calculado automáticamente: $${formData.totalPrice.toFixed(2)})`
-                      : '(Se calculará al seleccionar fechas y propiedad)'}
+                      `(Sugerido: $${formData.totalPrice.toFixed(2)} - Editable)`
+                      : '(Ingresa el precio manualmente)'}
                   </span>
                 </label>
                 <input
@@ -753,9 +753,9 @@ export function ReservationsPanel() {
                   onChange={(e) => setFormData({ ...formData, totalPrice: parseFloat(e.target.value) || 0 })}
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-50"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  placeholder="Ej: 450.00"
                   required
-                  readOnly
                 />
               </div>
 
