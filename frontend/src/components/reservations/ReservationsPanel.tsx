@@ -167,7 +167,7 @@ export function ReservationsPanel() {
 
     try {
       // Validar campos
-      if (!formData.propertyId || !formData.guestName || !formData.guestEmail || 
+      if (!formData.propertyId || !formData.guestName || 
           !formData.checkIn || !formData.checkOut || !formData.numberOfGuests || !formData.totalPrice) {
         setError('Por favor completa todos los campos requeridos');
         setSubmitting(false);
@@ -182,8 +182,8 @@ export function ReservationsPanel() {
       await apiClient.post('/reservations', {
         propertyId: formData.propertyId,
         guestName: formData.guestName,
-        guestEmail: formData.guestEmail,
-        guestPhone: formData.guestPhone,
+        guestEmail: formData.guestEmail || undefined,
+        guestPhone: formData.guestPhone || undefined,
         checkIn: checkInDate,
         checkOut: checkOutDate,
         numberOfGuests: parseInt(formData.numberOfGuests.toString()),
@@ -669,7 +669,7 @@ export function ReservationsPanel() {
               {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Email *
+                  Email
                 </label>
                 <input
                   type="email"
@@ -677,7 +677,6 @@ export function ReservationsPanel() {
                   onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                   placeholder="juan@email.com"
-                  required
                 />
               </div>
 

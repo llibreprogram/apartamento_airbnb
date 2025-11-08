@@ -43,10 +43,10 @@ export class Reservation {
   @Column('varchar', { length: 255 })
   guestName: string;
 
-  @Column('varchar', { length: 255 })
+  @Column('varchar', { length: 255, nullable: true })
   guestEmail: string;
 
-  @Column('varchar', { length: 20 })
+  @Column('varchar', { length: 20, nullable: true })
   guestPhone: string;
 
   @Column('date')

@@ -21,12 +21,12 @@ export class CreateReservationDto {
   guestName: string;
 
   @IsEmail()
-  @IsNotEmpty()
-  guestEmail: string;
+  @IsOptional()
+  guestEmail?: string;
 
   @IsString()
-  @IsNotEmpty()
-  guestPhone: string;
+  @IsOptional()
+  guestPhone?: string;
 
   @IsNotEmpty()
   @Transform(({ value }) => {
