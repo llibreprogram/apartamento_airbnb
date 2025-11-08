@@ -3,13 +3,56 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, MoreThan, Not } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { CreateReservationDto, UpdateReservationDto, CancelReservationDto } from './dto/create-reservation.dto';
+import { SeasonalPricingService } from '@/modules/properties/seasonal-pricing.service';
+import { PropertiesService } from '@/modules/properties/properties.service';
 
 @Injectable()
 export class ReservationsService {
   constructor(
     @InjectRepository(Reservation)
     private readonly reservationsRepository: Repository<Reservation>,
+    private readonly seasonalPricingService: SeasonalPricingService,
+    private readonly propertiesService: PropertiesService,
   ) {}
+
+  /**
+   * Calcular precio total de una reserva usando precios dinámicos
+   * Itera día por día y busca si hay precio especial activo
+   */
+  async calculateTotalPrice(
+    propertyId: string,
+    checkIn: string | Date,
+    checkOut: string | Date,
+  ): Promise<number> {
+    // Obtener la propiedad para el precio base
+    const property = await this.propertiesService.findOne(propertyId);
+
+    const startDate = new Date(checkIn);
+    const endDate = new Date(checkOut);
+
+    let totalPrice = 0;
+    const currentDate = new Date(startDate);
+
+    // Iterar cada día (noche) de la reserva
+    while (currentDate < endDate) {
+      const dateString = currentDate.toISOString().split('T')[0];
+
+      // Buscar precio especial para este día
+      const seasonalPrice = await this.seasonalPricingService.getPriceForDate(
+        propertyId,
+        dateString,
+      );
+
+      // Usar precio especial si existe, si no usar precio base
+      const priceForNight = seasonalPrice || Number(property.pricePerNight);
+      totalPrice += priceForNight;
+
+      // Avanzar al siguiente día
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return parseFloat(totalPrice.toFixed(2));
+  }
 
   async create(guestId: string, createReservationDto: CreateReservationDto) {
     const { propertyId, checkIn, checkOut } = createReservationDto;
@@ -40,10 +83,14 @@ export class ReservationsService {
       );
     }
 
+    // Calcular precio total usando precios dinámicos
+    const totalPrice = await this.calculateTotalPrice(propertyId, checkIn, checkOut);
+
     const reservation = this.reservationsRepository.create({
       ...createReservationDto,
       guestId,
       status: ReservationStatus.PENDING,
+      totalPrice, // Usar precio calculado con lógica dinámica
     });
 
     return this.reservationsRepository.save(reservation);
@@ -162,6 +209,14 @@ export class ReservationsService {
           'Property is not available for the selected dates',
         );
       }
+
+      // Recalcular precio total con las nuevas fechas
+      const totalPrice = await this.calculateTotalPrice(
+        reservation.propertyId,
+        checkIn,
+        checkOut,
+      );
+      updateReservationDto.totalPrice = totalPrice;
     }
 
     Object.assign(reservation, updateReservationDto);
