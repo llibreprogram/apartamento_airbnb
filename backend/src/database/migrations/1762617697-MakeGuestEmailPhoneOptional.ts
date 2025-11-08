@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class MakeGuestEmailPhoneOptional$(date +%s) implements MigrationInterface {
+export class MakeGuestEmailPhoneOptional1762617697 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Hacer nullable las columnas guestEmail y guestPhone
     await queryRunner.query(`
