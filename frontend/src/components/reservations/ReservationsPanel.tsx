@@ -38,6 +38,7 @@ export function ReservationsPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const itemsPerPage = 10;
 
   // Formulario de nueva reservación
@@ -65,7 +66,15 @@ export function ReservationsPanel() {
       if (propertyId) params.append('propertyId', propertyId);
 
       const response = await apiClient.get('/reservations', { params });
-      setReservations(response.data.data || response.data);
+      const reservationsData = response.data.data || response.data;
+      
+      // Mapear nombres de propiedades
+      const reservationsWithNames = reservationsData.map((res: Reservation) => ({
+        ...res,
+        propertyName: properties.find(p => p.id === res.propertyId)?.name || res.propertyId
+      }));
+      
+      setReservations(reservationsWithNames);
       setCurrentPage(page);
       setTotalPages(response.data.pageCount || 1);
     } catch (err: any) {
@@ -85,9 +94,14 @@ export function ReservationsPanel() {
   };
 
   useEffect(() => {
-    fetchReservations(1, filterStatus, filterProperty);
     fetchProperties();
   }, []);
+
+  useEffect(() => {
+    if (properties.length > 0) {
+      fetchReservations(1, filterStatus, filterProperty);
+    }
+  }, [properties]);
 
   // Calcular precio automáticamente cuando cambian fechas o propiedad
   useEffect(() => {
@@ -160,6 +174,13 @@ export function ReservationsPanel() {
     return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(date);
   };
 
+  const handleSubmitReservation = async (e: React.FormEvent) => {
+    if (editingReservation) {
+      return handleUpdateReservation(e);
+    }
+    return handleAddReservation(e);
+  };
+
   const handleAddReservation = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -204,11 +225,75 @@ export function ReservationsPanel() {
         notes: '',
       });
       setShowModal(false);
+      setEditingReservation(null);
 
       // Recargar reservaciones
       fetchReservations(1, filterStatus);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al crear reservación');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditReservation = (reservation: Reservation) => {
+    setEditingReservation(reservation);
+    setFormData({
+      propertyId: reservation.propertyId,
+      guestName: reservation.guestName,
+      guestEmail: reservation.guestEmail || '',
+      guestPhone: '', // No está en la interfaz actual
+      checkIn: new Date(reservation.checkIn).toISOString().split('T')[0],
+      checkOut: new Date(reservation.checkOut).toISOString().split('T')[0],
+      numberOfGuests: reservation.numberOfGuests,
+      totalPrice: reservation.totalPrice,
+      notes: '',
+    });
+    setShowModal(true);
+  };
+
+  const handleUpdateReservation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReservation) return;
+    
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
+      const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
+
+      await apiClient.put(`/reservations/${editingReservation.id}`, {
+        propertyId: formData.propertyId,
+        guestName: formData.guestName,
+        guestEmail: formData.guestEmail || undefined,
+        guestPhone: formData.guestPhone || undefined,
+        checkIn: checkInDate,
+        checkOut: checkOutDate,
+        numberOfGuests: parseInt(formData.numberOfGuests.toString()),
+        totalPrice: parseFloat(formData.totalPrice.toString()),
+        notes: formData.notes || undefined,
+      });
+
+      // Limpiar formulario y cerrar modal
+      setFormData({
+        propertyId: '',
+        guestName: '',
+        guestEmail: '',
+        guestPhone: '',
+        checkIn: '',
+        checkOut: '',
+        numberOfGuests: 1,
+        totalPrice: 0,
+        notes: '',
+      });
+      setShowModal(false);
+      setEditingReservation(null);
+
+      // Recargar reservaciones
+      fetchReservations(currentPage, filterStatus, filterProperty);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al actualizar reservación');
     } finally {
       setSubmitting(false);
     }
@@ -408,6 +493,15 @@ export function ReservationsPanel() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2 flex-wrap">
+                          {res.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handleEditReservation(res)}
+                              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded font-semibold transition"
+                              title="Editar reserva"
+                            >
+                              ✏️ Editar
+                            </button>
+                          )}
                           {res.status === 'pending' && (
                             <>
                               <button
@@ -625,11 +719,13 @@ export function ReservationsPanel() {
         </div>
       )}
 
-      {/* Modal para agregar reservación */}
+      {/* Modal para agregar/editar reservación */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-xl font-bold mb-4">Agregar Nueva Reservación</h3>
+            <h3 className="text-xl font-bold mb-4">
+              {editingReservation ? 'Editar Reservación' : 'Agregar Nueva Reservación'}
+            </h3>
 
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -637,7 +733,7 @@ export function ReservationsPanel() {
               </div>
             )}
 
-            <form onSubmit={handleAddReservation} className="space-y-4">
+            <form onSubmit={handleSubmitReservation} className="space-y-4">
               {/* Propiedad */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -784,7 +880,10 @@ export function ReservationsPanel() {
               <div className="flex gap-2 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingReservation(null);
+                  }}
                   className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 font-semibold"
                   disabled={submitting}
                 >
@@ -795,7 +894,7 @@ export function ReservationsPanel() {
                   className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold disabled:opacity-50"
                   disabled={submitting}
                 >
-                  {submitting ? 'Guardando...' : 'Crear Reservación'}
+                  {submitting ? 'Guardando...' : (editingReservation ? 'Actualizar Reservación' : 'Crear Reservación')}
                 </button>
               </div>
             </form>
