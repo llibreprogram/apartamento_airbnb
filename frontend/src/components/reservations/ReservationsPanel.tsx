@@ -244,7 +244,7 @@ export function ReservationsPanel() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-[calc(100vh-12rem)] overflow-y-auto space-y-6 pr-2">
       {/* Header */}
       <div className="bg-white pb-4 mb-4 border-b">
         <div className="flex justify-between items-center mb-4">
@@ -365,7 +365,7 @@ export function ReservationsPanel() {
         <>
           {/* Table */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+            <div className="overflow-x-auto">
               <table className="w-full">
               <thead className="bg-gray-100 border-b">
                 <tr>
@@ -495,7 +495,7 @@ export function ReservationsPanel() {
 
       {/* VISTA DE CALENDARIO */}
       {viewMode === 'calendar' && (
-        <div className="bg-white rounded-lg shadow p-6 overflow-y-auto max-h-[600px]">
+        <div className="bg-white rounded-lg shadow p-6">
           {/* Calendar Navigation */}
           <div className="flex justify-between items-center mb-6">
             <button
