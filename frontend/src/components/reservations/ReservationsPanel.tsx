@@ -278,6 +278,15 @@ export function ReservationsPanel() {
       const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
       const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
 
+      // Verificar si las fechas cambiaron
+      const originalCheckIn = new Date(editingReservation.checkIn).toISOString();
+      const originalCheckOut = new Date(editingReservation.checkOut).toISOString();
+      const datesChanged = checkInDate !== originalCheckIn || checkOutDate !== originalCheckOut;
+
+      // Si las fechas cambiaron, enviar totalPrice: 0 para forzar recálculo con precios dinámicos
+      // Si no cambiaron, usar el precio actual del formulario
+      const totalPriceToSend = datesChanged ? 0 : parseFloat(formData.totalPrice.toString());
+
       // NO enviar propertyId - no se puede cambiar la propiedad de una reserva existente
       await apiClient.put(`/reservations/${editingReservation.id}`, {
         guestName: formData.guestName,
@@ -286,7 +295,7 @@ export function ReservationsPanel() {
         checkIn: checkInDate,
         checkOut: checkOutDate,
         numberOfGuests: parseInt(formData.numberOfGuests.toString()),
-        totalPrice: parseFloat(formData.totalPrice.toString()),
+        totalPrice: totalPriceToSend,
         notes: formData.notes || undefined,
       });
 
