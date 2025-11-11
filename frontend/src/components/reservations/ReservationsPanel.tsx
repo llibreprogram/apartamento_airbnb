@@ -244,109 +244,117 @@ export function ReservationsPanel() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Mis Reservaciones</h2>
-          <p className="text-gray-500">Total: {reservations.length} reservaciones</p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
-        >
-          ✓ Agregar Reservación
-        </button>
-      </div>
-
-      {/* View Mode Toggle */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setViewMode('list')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-            viewMode === 'list'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          📋 Vista de Lista
-        </button>
-        <button
-          onClick={() => setViewMode('calendar')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-            viewMode === 'calendar'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          📅 Vista de Calendario
-        </button>
-      </div>
-
-      {/* Property Filter */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Filtrar por Propiedad:
-        </label>
-        <select
-          value={filterProperty}
-          onChange={(e) => handlePropertyFilter(e.target.value)}
-          className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-        >
-          <option value="">Todas las propiedades</option>
-          {properties.map((prop) => (
-            <option key={prop.id} value={prop.id}>
-              {prop.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Status Filter */}
-      {viewMode === 'list' && (
-        <div className="flex gap-2 flex-wrap">
+    <div className="flex flex-col h-full max-h-[calc(100vh-8rem)]">
+      {/* Header - Sticky */}
+      <div className="flex-none bg-white pb-4 mb-4 border-b sticky top-0 z-10">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold">Mis Reservaciones</h2>
+            <p className="text-gray-500">Total: {reservations.length} reservaciones</p>
+          </div>
           <button
-            onClick={() => handleStatusFilter('')}
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold shadow-md"
+          >
+            ✓ Agregar Reservación
+          </button>
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-              filterStatus === ''
+              viewMode === 'list'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            Todas
+            📋 Vista de Lista
           </button>
           <button
-            onClick={() => handleStatusFilter('pending')}
+            onClick={() => setViewMode('calendar')}
             className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-              filterStatus === 'pending'
-                ? 'bg-yellow-500 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Pendientes
-          </button>
-          <button
-            onClick={() => handleStatusFilter('confirmed')}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-              filterStatus === 'confirmed'
+              viewMode === 'calendar'
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            Confirmadas
-          </button>
-          <button
-            onClick={() => handleStatusFilter('completed')}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-              filterStatus === 'completed'
-                ? 'bg-green-500 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Completadas
+            📅 Vista de Calendario
           </button>
         </div>
-      )}
+
+        {/* Filters Row */}
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
+          {/* Property Filter */}
+          <div className="flex-1 bg-white p-4 rounded-lg shadow">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Filtrar por Propiedad:
+            </label>
+            <select
+              value={filterProperty}
+              onChange={(e) => handlePropertyFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Todas las propiedades</option>
+              {properties.map((prop) => (
+                <option key={prop.id} value={prop.id}>
+                  {prop.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          {viewMode === 'list' && (
+            <div className="flex gap-2 flex-wrap items-end">
+              <button
+                onClick={() => handleStatusFilter('')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  filterStatus === ''
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Todas
+              </button>
+              <button
+                onClick={() => handleStatusFilter('pending')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  filterStatus === 'pending'
+                    ? 'bg-yellow-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Pendientes
+              </button>
+              <button
+                onClick={() => handleStatusFilter('confirmed')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  filterStatus === 'confirmed'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Confirmadas
+              </button>
+              <button
+                onClick={() => handleStatusFilter('completed')}
+                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  filterStatus === 'completed'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Completadas
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content Area with Scroll */}
+      <div className="flex-1 overflow-y-auto space-y-4">
 
       {/* Error */}
       {error && (
@@ -359,8 +367,9 @@ export function ReservationsPanel() {
       {viewMode === 'list' && (
         <>
           {/* Table */}
-          <div className="overflow-x-auto bg-white rounded-lg shadow">
-            <table className="w-full">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+              <table className="w-full">
               <thead className="bg-gray-100 border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Propiedad</th>
@@ -463,6 +472,7 @@ export function ReservationsPanel() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Pagination */}
@@ -488,7 +498,7 @@ export function ReservationsPanel() {
 
       {/* VISTA DE CALENDARIO */}
       {viewMode === 'calendar' && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 overflow-y-auto">
           {/* Calendar Navigation */}
           <div className="flex justify-between items-center mb-6">
             <button
@@ -617,6 +627,7 @@ export function ReservationsPanel() {
           )}
         </div>
       )}
+      </div>
 
       {/* Modal para agregar reservación */}
       {showModal && (
