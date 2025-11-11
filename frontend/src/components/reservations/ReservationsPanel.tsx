@@ -274,8 +274,8 @@ export function ReservationsPanel() {
       const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
       const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
 
+      // NO enviar propertyId - no se puede cambiar la propiedad de una reserva existente
       await apiClient.put(`/reservations/${editingReservation.id}`, {
-        propertyId: formData.propertyId,
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
         guestPhone: formData.guestPhone || undefined,
@@ -737,13 +737,14 @@ export function ReservationsPanel() {
               {/* Propiedad */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Propiedad *
+                  Propiedad * {editingReservation && <span className="text-xs text-gray-500">(No se puede cambiar)</span>}
                 </label>
                 <select
                   value={formData.propertyId}
                   onChange={(e) => setFormData({ ...formData, propertyId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   required
+                  disabled={!!editingReservation}
                 >
                   <option value="">Selecciona una propiedad</option>
                   {properties.map((prop) => (
