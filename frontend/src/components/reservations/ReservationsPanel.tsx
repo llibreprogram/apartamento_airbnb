@@ -244,9 +244,9 @@ export function ReservationsPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(100vh-8rem)]">
+    <div className="space-y-6">
       {/* Header - Sticky */}
-      <div className="flex-none bg-white pb-4 mb-4 border-b sticky top-0 z-10">
+      <div className="bg-white pt-4 pb-4 mb-4 border-b sticky top-0 z-10">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-2xl font-bold">Mis Reservaciones</h2>
@@ -352,9 +352,6 @@ export function ReservationsPanel() {
           )}
         </div>
       </div>
-
-      {/* Content Area with Scroll */}
-      <div className="flex-1 overflow-y-auto space-y-4">
 
       {/* Error */}
       {error && (
@@ -627,7 +624,6 @@ export function ReservationsPanel() {
           )}
         </div>
       )}
-      </div>
 
       {/* Modal para agregar reservación */}
       {showModal && (
