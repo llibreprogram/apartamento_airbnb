@@ -68,10 +68,13 @@ export function ReservationsPanel() {
       const response = await apiClient.get('/reservations', { params });
       const reservationsData = response.data.data || response.data;
       
+      // Asegurarse de que properties esté disponible
+      const currentProperties = properties.length > 0 ? properties : await fetchPropertiesSync();
+      
       // Mapear nombres de propiedades
       const reservationsWithNames = reservationsData.map((res: Reservation) => ({
         ...res,
-        propertyName: properties.find(p => p.id === res.propertyId)?.name || res.propertyId
+        propertyName: currentProperties.find((p: Property) => p.id === res.propertyId)?.name || res.propertyId
       }));
       
       setReservations(reservationsWithNames);
@@ -84,24 +87,25 @@ export function ReservationsPanel() {
     }
   };
 
-  const fetchProperties = async () => {
+  const fetchPropertiesSync = async (): Promise<Property[]> => {
     try {
       const response = await apiClient.get('/properties');
-      setProperties(response.data.data || response.data);
+      const props = response.data.data || response.data;
+      setProperties(props);
+      return props;
     } catch (err: any) {
       console.error('Error loading properties:', err);
+      return [];
     }
   };
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
-
-  useEffect(() => {
-    if (properties.length > 0) {
+    const loadData = async () => {
+      await fetchPropertiesSync();
       fetchReservations(1, filterStatus, filterProperty);
-    }
-  }, [properties]);
+    };
+    loadData();
+  }, []);
 
   // Calcular precio automáticamente cuando cambian fechas o propiedad
   useEffect(() => {
