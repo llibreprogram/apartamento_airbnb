@@ -109,18 +109,41 @@ export function ReservationsPanel() {
 
   // Calcular precio automáticamente cuando cambian fechas o propiedad
   useEffect(() => {
-    if (formData.checkIn && formData.checkOut && formData.propertyId) {
-      const property = properties.find(p => p.id === formData.propertyId);
-      if (property && property.pricePerNight) {
-        const checkIn = new Date(formData.checkIn);
-        const checkOut = new Date(formData.checkOut);
-        const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
-        const basePrice = nights * property.pricePerNight;
-        const deposit = property.deposit || 0;
-        const totalPrice = basePrice + deposit;
-        setFormData(prev => ({ ...prev, totalPrice: Math.round(totalPrice * 100) / 100 }));
+    const calculatePrice = async () => {
+      if (formData.checkIn && formData.checkOut && formData.propertyId) {
+        try {
+          // Crear una reserva temporal con precio 0 para obtener el precio calculado
+          const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
+          const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
+          
+          // Hacer una petición simulada para obtener el precio
+          // El backend calculará el precio con precios dinámicos
+          const response = await apiClient.post('/reservations/calculate-price', {
+            propertyId: formData.propertyId,
+            checkIn: checkInDate,
+            checkOut: checkOutDate,
+          });
+          
+          if (response.data && response.data.totalPrice) {
+            setFormData(prev => ({ ...prev, totalPrice: response.data.totalPrice }));
+          }
+        } catch (err) {
+          // Si falla, usar cálculo básico
+          const property = properties.find(p => p.id === formData.propertyId);
+          if (property && property.pricePerNight) {
+            const checkIn = new Date(formData.checkIn);
+            const checkOut = new Date(formData.checkOut);
+            const nights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)));
+            const basePrice = nights * property.pricePerNight;
+            const deposit = property.deposit || 0;
+            const totalPrice = basePrice + deposit;
+            setFormData(prev => ({ ...prev, totalPrice: Math.round(totalPrice * 100) / 100 }));
+          }
+        }
       }
-    }
+    };
+    
+    calculatePrice();
   }, [formData.checkIn, formData.checkOut, formData.propertyId, properties]);
 
   const handleStatusFilter = (status: string) => {

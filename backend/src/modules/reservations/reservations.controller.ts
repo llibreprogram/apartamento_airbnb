@@ -30,6 +30,22 @@ import {
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
+  @Post('calculate-price')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Calculate total price for dates without creating reservation' })
+  @ApiResponse({ status: 200, description: 'Price calculated' })
+  @ApiResponse({ status: 400, description: 'Invalid dates' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async calculatePrice(@Body() body: { propertyId: string; checkIn: string; checkOut: string }) {
+    const totalPrice = await this.reservationsService.calculateTotalPrice(
+      body.propertyId,
+      new Date(body.checkIn),
+      new Date(body.checkOut),
+    );
+    return { totalPrice };
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
