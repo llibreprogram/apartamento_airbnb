@@ -123,7 +123,7 @@ export class UpdateReservationDto {
   numberOfGuests?: number;
 
   @IsNumber()
-  @Min(1)
+  @Min(0)
   @IsOptional()
   totalPrice?: number;
 
