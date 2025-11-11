@@ -52,6 +52,7 @@ describe('RegisterForm', () => {
 
     const nameInput = screen.getByPlaceholderText(/juan pérez/i) as HTMLInputElement;
     const emailInput = screen.getByPlaceholderText(/tu@email.com/i) as HTMLInputElement;
+    const passwordInput = screen.getByDisplayValue('') as HTMLInputElement;
 
     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
     fireEvent.change(emailInput, { target: { value: 'john@example.com' } });

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ExpensesService } from './expenses.service';
-import { Expense, ExpenseCategory } from './entities/expense.entity';
+import { Expense } from './entities/expense.entity';
 
 describe('ExpensesService', () => {
   let service: ExpensesService;
@@ -12,7 +12,7 @@ describe('ExpensesService', () => {
     propertyId: 'prop-123',
     description: 'Cleaning supplies',
     amount: 50,
-    category: ExpenseCategory.CLEANING,
+    category: 'cleaning',
     date: new Date('2025-11-15'),
   };
 
@@ -45,7 +45,7 @@ describe('ExpensesService', () => {
         propertyId: 'prop-123',
         description: 'Monthly utilities',
         amount: 150,
-        category: ExpenseCategory.UTILITIES,
+        category: 'utilities',
         date: new Date('2025-11-15'),
       };
 
@@ -100,12 +100,12 @@ describe('ExpensesService', () => {
     });
   });
 
-  describe('remove', () => {
+  describe('delete', () => {
     it('should delete an expense', async () => {
       mockExpenseRepository.findOne.mockResolvedValue(mockExpense);
       mockExpenseRepository.delete.mockResolvedValue({ affected: 1 });
 
-      await service.remove('exp-123');
+      await service.delete('exp-123');
 
       expect(mockExpenseRepository.delete).toHaveBeenCalledWith('exp-123');
     });
@@ -130,12 +130,12 @@ describe('ExpensesService', () => {
     it('should return expenses by category', async () => {
       mockExpenseRepository.find.mockResolvedValue([mockExpense]);
 
-      const result = await service.findByCategory('prop-123', ExpenseCategory.CLEANING, 1, 10);
+      const result = await service.findByCategory('cleaning', 1, 10);
 
       expect(Array.isArray(result)).toBe(true);
       expect(mockExpenseRepository.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { category: ExpenseCategory.CLEANING },
+          where: { category: 'cleaning' },
         }),
       );
     });
@@ -151,12 +151,7 @@ describe('ExpensesService', () => {
 
       mockExpenseRepository.find.mockResolvedValue(expenses);
 
-      jest.spyOn(service, 'getTotalByCategory').mockResolvedValue({
-        cleaning: 125,
-        utilities: 150,
-      });
-
-      const result = await service.getTotalByCategory('prop-123', new Date('2025-11-01'), new Date('2025-11-30'));
+      const result = await service.getTotalByCategory();
 
       expect(result).toBeDefined();
       expect(result.cleaning).toBe(125);
@@ -172,7 +167,6 @@ describe('ExpensesService', () => {
       const endDate = new Date('2025-11-30');
 
       const result = await service.findByDateRange(
-        'prop-123',
         startDate,
         endDate,
         1,

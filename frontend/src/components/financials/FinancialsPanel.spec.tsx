@@ -12,6 +12,12 @@ jest.mock('@/services/api', () => ({
 }));
 
 describe('FinancialsPanel', () => {
+  const mockFinancialSummary = {
+    totalGrossIncome: 15000,
+    totalExpenses: 3500,
+    netProfit: 11500,
+    averageROI: 76.67,
+  };
 
   const mockPropertyFinancials = [
     {

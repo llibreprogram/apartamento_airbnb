@@ -13,6 +13,14 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Dashboard stats
+  const [stats, setStats] = useState({
+    totalProperties: 0,
+    totalReservations: 0,
+    totalExpenses: 0,
+    profitability: 0,
+  });
 
   useEffect(() => {
     // Check if authenticated
@@ -20,8 +28,58 @@ export function DashboardPage() {
       navigate('/login');
       return;
     }
+    loadDashboardStats();
     setIsLoading(false);
   }, [isAuthenticated, user, navigate]);
+
+  const loadDashboardStats = async () => {
+    try {
+      // Load properties
+      const propertiesRes = await fetch('http://localhost:3001/api/properties', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const propertiesData = await propertiesRes.json();
+      const properties = Array.isArray(propertiesData) ? propertiesData : propertiesData.data || [];
+      
+      // Load reservations
+      const reservationsRes = await fetch('http://localhost:3001/api/reservations', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const reservationsData = await reservationsRes.json();
+      const reservations = Array.isArray(reservationsData) ? reservationsData : reservationsData.data || [];
+      
+      // Load expenses
+      const expensesRes = await fetch('http://localhost:3001/api/expenses', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const expensesData = await expensesRes.json();
+      const expenses = Array.isArray(expensesData) ? expensesData : expensesData.data || [];
+      
+      // Calculate total expenses
+      const totalExpenses = expenses.reduce((sum: number, expense: any) => sum + parseFloat(expense.amount || 0), 0);
+      
+      // Calculate total income from reservations
+      const totalIncome = reservations.reduce((sum: number, reservation: any) => sum + parseFloat(reservation.totalPrice || 0), 0);
+      
+      // Calculate profitability (ROI)
+      const profitability = totalExpenses > 0 ? ((totalIncome - totalExpenses) / totalExpenses * 100) : 0;
+      
+      setStats({
+        totalProperties: properties.length,
+        totalReservations: reservations.length,
+        totalExpenses: totalExpenses,
+        profitability: profitability,
+      });
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -109,7 +167,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Propiedades</p>
-                    <p className="text-4xl font-bold text-blue-600 mt-3">0</p>
+                    <p className="text-4xl font-bold text-blue-600 mt-3">{stats.totalProperties}</p>
                   </div>
                   <div className="text-4xl">🏠</div>
                 </div>
@@ -118,7 +176,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Reservaciones</p>
-                    <p className="text-4xl font-bold text-green-600 mt-3">0</p>
+                    <p className="text-4xl font-bold text-green-600 mt-3">{stats.totalReservations}</p>
                   </div>
                   <div className="text-4xl">📅</div>
                 </div>
@@ -127,7 +185,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Gastos Totales</p>
-                    <p className="text-4xl font-bold text-amber-600 mt-3">$0</p>
+                    <p className="text-4xl font-bold text-amber-600 mt-3">${stats.totalExpenses.toFixed(2)}</p>
                   </div>
                   <div className="text-4xl">💰</div>
                 </div>
@@ -136,7 +194,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-gray-500 text-sm font-semibold uppercase tracking-wide">Rentabilidad</p>
-                    <p className="text-4xl font-bold text-purple-600 mt-3">0%</p>
+                    <p className="text-4xl font-bold text-purple-600 mt-3">{stats.profitability.toFixed(1)}%</p>
                   </div>
                   <div className="text-4xl">📈</div>
                 </div>

@@ -107,6 +107,7 @@ export class ReservationsService {
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
+      cache: false, // Disable cache to ensure fresh data
     });
 
     return {
@@ -122,6 +123,7 @@ export class ReservationsService {
     const reservation = await this.reservationsRepository.findOne({
       where: { id },
       relations: ['property', 'guest'],
+      cache: false, // Disable cache to ensure fresh data
     });
 
     if (!reservation) {
@@ -138,6 +140,7 @@ export class ReservationsService {
       skip: (page - 1) * limit,
       take: limit,
       order: { checkIn: 'DESC' },
+      cache: false, // Disable cache to ensure fresh data
     });
 
     return {
@@ -226,8 +229,60 @@ export class ReservationsService {
       }
     }
 
-    Object.assign(reservation, updateReservationDto);
-    return this.reservationsRepository.save(reservation);
+    console.log('Before update - reservation:', {
+      id: reservation.id,
+      checkIn: reservation.checkIn,
+      checkOut: reservation.checkOut,
+      totalPrice: reservation.totalPrice
+    });
+    console.log('DTO to apply:', updateReservationDto);
+
+    // Build update data object with explicit string conversion for dates
+    const updateData: any = {};
+    
+    if (updateReservationDto.checkIn) {
+      const date = new Date(updateReservationDto.checkIn);
+      updateData.checkIn = date.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    }
+    if (updateReservationDto.checkOut) {
+      const date = new Date(updateReservationDto.checkOut);
+      updateData.checkOut = date.toISOString().split('T')[0]; // "YYYY-MM-DD"
+    }
+    if (updateReservationDto.guestName) {
+      updateData.guestName = updateReservationDto.guestName;
+    }
+    if (updateReservationDto.guestEmail !== undefined) {
+      updateData.guestEmail = updateReservationDto.guestEmail;
+    }
+    if (updateReservationDto.guestPhone !== undefined) {
+      updateData.guestPhone = updateReservationDto.guestPhone;
+    }
+    if (updateReservationDto.numberOfGuests) {
+      updateData.numberOfGuests = updateReservationDto.numberOfGuests;
+    }
+    if (updateReservationDto.totalPrice !== undefined) {
+      updateData.totalPrice = updateReservationDto.totalPrice;
+    }
+    if (updateReservationDto.notes !== undefined) {
+      updateData.notes = updateReservationDto.notes;
+    }
+
+    console.log('Updating reservation with data:', updateData);
+
+    // Use update() to force SQL UPDATE without change detection
+    await this.reservationsRepository.update(id, updateData);
+    
+    // Reload to get updated entity
+    const updated = await this.findOne(id);
+    
+    console.log('After update and reload:', {
+      id: updated.id,
+      checkIn: updated.checkIn,
+      checkOut: updated.checkOut,
+      totalPrice: updated.totalPrice
+    });
+    
+    return updated;
   }
 
   async confirm(id: string) {

@@ -35,7 +35,8 @@ export class AuthService {
 
     await this.usersRepository.save(user);
 
-    const { password: _password, ...result } = user;
+    // Retornar sin la contraseña
+    const { password, ...result } = user;
     return result;
   }
 
@@ -79,7 +80,7 @@ export class AuthService {
     });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const { password: _password, ...result } = user;
+      const { password, ...result } = user;
       return result;
     }
 

@@ -214,8 +214,9 @@ export function FinancialsPanel() {
     : 0;
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100vh-12rem)] overflow-y-auto space-y-6 pr-2">
       {/* Header */}
+      <div className="bg-white pb-4 mb-4 border-b">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">{t('financialReport')}</h2>
@@ -718,6 +719,7 @@ ${propertyExpenses.map(e => `${e.category},${e.amount}`).join('\n')}`;
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

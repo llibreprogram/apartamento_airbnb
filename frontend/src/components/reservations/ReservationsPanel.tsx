@@ -39,6 +39,7 @@ export function ReservationsPanel() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Force re-render key
   const itemsPerPage = 10;
 
   // Formulario de nueva reservación
@@ -61,6 +62,7 @@ export function ReservationsPanel() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: itemsPerPage.toString(),
+        _t: Date.now().toString(), // Cache-busting timestamp
       });
       if (status) params.append('status', status);
       if (propertyId) params.append('propertyId', propertyId);
@@ -77,7 +79,23 @@ export function ReservationsPanel() {
         propertyName: currentProperties.find((p: Property) => p.id === res.propertyId)?.name || res.propertyId
       }));
       
-      setReservations(reservationsWithNames);
+      console.log('Setting reservations with:', reservationsWithNames.length, 'items');
+      if (reservationsWithNames[0]) {
+        console.log('First reservation details:', {
+          id: reservationsWithNames[0].id,
+          guestName: reservationsWithNames[0].guestName,
+          checkIn: reservationsWithNames[0].checkIn,
+          checkOut: reservationsWithNames[0].checkOut,
+          totalPrice: reservationsWithNames[0].totalPrice
+        });
+      }
+      console.log('ALL reservations data:', reservationsWithNames.map((r: Reservation) => ({
+        id: r.id,
+        guestName: r.guestName,
+        checkIn: r.checkIn,
+        checkOut: r.checkOut
+      })));
+      setReservations([...reservationsWithNames]); // Force new array reference
       setCurrentPage(page);
       setTotalPages(response.data.pageCount || 1);
     } catch (err: any) {
@@ -111,6 +129,11 @@ export function ReservationsPanel() {
   useEffect(() => {
     const calculatePrice = async () => {
       if (formData.checkIn && formData.checkOut && formData.propertyId) {
+        console.log('Calculating price for:', {
+          checkIn: formData.checkIn,
+          checkOut: formData.checkOut,
+          propertyId: formData.propertyId
+        });
         try {
           // Crear una reserva temporal con precio 0 para obtener el precio calculado
           const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
@@ -124,10 +147,12 @@ export function ReservationsPanel() {
             checkOut: checkOutDate,
           });
           
+          console.log('Price calculated from backend:', response.data.totalPrice);
           if (response.data && response.data.totalPrice) {
             setFormData(prev => ({ ...prev, totalPrice: response.data.totalPrice }));
           }
-        } catch (err) {
+        } catch (err: any) {
+          console.error('Error calculating price:', err.response?.data || err.message);
           // Si falla, usar cálculo básico
           const property = properties.find(p => p.id === formData.propertyId);
           if (property && property.pricePerNight) {
@@ -137,6 +162,7 @@ export function ReservationsPanel() {
             const basePrice = nights * property.pricePerNight;
             const deposit = property.deposit || 0;
             const totalPrice = basePrice + deposit;
+            console.log('Using basic price calculation:', totalPrice);
             setFormData(prev => ({ ...prev, totalPrice: Math.round(totalPrice * 100) / 100 }));
           }
         }
@@ -227,7 +253,7 @@ export function ReservationsPanel() {
       const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
 
       // Crear reservación
-      await apiClient.post('/reservations', {
+      const response = await apiClient.post('/reservations', {
         propertyId: formData.propertyId,
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
@@ -239,12 +265,15 @@ export function ReservationsPanel() {
         notes: formData.notes || undefined,
       });
 
+      console.log('Reservation created:', response.data);
+
       // Limpiar formulario y cerrar modal
       setShowModal(false);
       resetForm();
 
-      // Recargar reservaciones
-      fetchReservations(1, filterStatus);
+      // Recargar reservaciones - ir a página 1
+      await fetchReservations(1, filterStatus, filterProperty);
+      console.log('Reservations reloaded after create');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al crear reservación');
     } finally {
@@ -311,7 +340,7 @@ export function ReservationsPanel() {
       const totalPriceToSend = datesChanged ? 0 : parseFloat(formData.totalPrice.toString());
 
       // NO enviar propertyId - no se puede cambiar la propiedad de una reserva existente
-      await apiClient.put(`/reservations/${editingReservation.id}`, {
+      const response = await apiClient.put(`/reservations/${editingReservation.id}`, {
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
         guestPhone: formData.guestPhone || undefined,
@@ -322,12 +351,28 @@ export function ReservationsPanel() {
         notes: formData.notes || undefined,
       });
 
+      console.log('Reservation updated:', {
+        id: response.data.id,
+        guestName: response.data.guestName,
+        checkIn: response.data.checkIn,
+        checkOut: response.data.checkOut,
+        totalPrice: response.data.totalPrice
+      });
+
       // Limpiar formulario y cerrar modal
       setShowModal(false);
       resetForm();
 
       // Recargar reservaciones
-      fetchReservations(currentPage, filterStatus, filterProperty);
+      await fetchReservations(currentPage, filterStatus, filterProperty);
+      
+      // Forzar re-render incrementando la key
+      setRefreshKey(prev => {
+        const newKey = prev + 1;
+        console.log('🔄 RefreshKey updated from', prev, 'to', newKey);
+        return newKey;
+      });
+      console.log('✅ Reservations reloaded - current list has', reservations.length, 'items');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al actualizar reservación');
     } finally {
@@ -501,7 +546,7 @@ export function ReservationsPanel() {
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody key={refreshKey}>
                 {reservations.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
@@ -509,16 +554,26 @@ export function ReservationsPanel() {
                     </td>
                   </tr>
                 ) : (
-                  reservations.map((res) => (
-                    <tr key={res.id} className="border-b hover:bg-gray-50">
+                  reservations.map((res, index) => {
+                    if (index === 0) {
+                      console.log('🎯 RENDERING ROW 0:', {
+                        id: res.id,
+                        guestName: res.guestName,
+                        checkIn: res.checkIn,
+                        checkOut: res.checkOut,
+                        formatted: new Date(res.checkIn).toLocaleDateString('es-ES')
+                      });
+                    }
+                    return (
+                    <tr key={`${res.id}-${res.checkIn}-${res.checkOut}`} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4 font-semibold text-gray-900">{res.propertyName || res.propertyId}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{res.guestName}</td>
                       <td className="px-6 py-4 text-gray-600 text-sm">{res.guestEmail}</td>
                       <td className="px-6 py-4 text-gray-600">
-                        {new Date(res.checkIn).toLocaleDateString('es-ES')}
+                        {res.checkIn.split('T')[0].split('-').reverse().join('/')}
                       </td>
                       <td className="px-6 py-4 text-gray-600">
-                        {new Date(res.checkOut).toLocaleDateString('es-ES')}
+                        {res.checkOut.split('T')[0].split('-').reverse().join('/')}
                       </td>
                       <td className="px-6 py-4 text-gray-600 text-center">{res.numberOfGuests}</td>
                       <td className="px-6 py-4 font-semibold text-green-600">${res.totalPrice}</td>
@@ -595,7 +650,8 @@ export function ReservationsPanel() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  );
+                  })
                 )}
               </tbody>
             </table>
@@ -882,7 +938,7 @@ export function ReservationsPanel() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Precio Total ($) * 
                   <span className="text-xs font-normal text-gray-500 ml-2">
-                    {formData.checkIn && formData.checkOut && formData.propertyId && formData.totalPrice > 0 ? 
+                    {formData.checkIn && formData.checkOut && formData.propertyId && formData.totalPrice && Number(formData.totalPrice) > 0 ? 
                       `(Sugerido: $${Number(formData.totalPrice).toFixed(2)} - Editable)`
                       : '(Ingresa el precio manualmente)'}
                   </span>

@@ -5,11 +5,6 @@ import { AuthService } from './auth.service';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 
-jest.mock('bcryptjs', () => ({
-  compare: jest.fn(),
-  hash: jest.fn(),
-}));
-
 describe('AuthService', () => {
   let service: AuthService;
   let jwtService: JwtService;
@@ -91,7 +86,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        'El email ya está registrado',
+        'User already exists',
       );
     });
   });
@@ -103,7 +98,7 @@ describe('AuthService', () => {
         password: 'Password123',
       };
 
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       const result = await service.login(loginDto);
@@ -115,9 +110,22 @@ describe('AuthService', () => {
         sub: mockUser.id,
         email: mockUser.email,
         role: mockUser.role,
-      }, { expiresIn: '24h' });
+      });
     });
 
+    it('should throw error for invalid credentials', async () => {
+      const loginDto = {
+        email: 'test@example.com',
+        password: 'WrongPassword123',
+      };
+
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        'Invalid credentials',
+      );
+    });
 
     it('should throw error if user not found', async () => {
       const loginDto = {
@@ -128,7 +136,7 @@ describe('AuthService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        'Credenciales inválidas',
+        'Invalid credentials',
       );
     });
   });
@@ -136,7 +144,7 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('should validate and return user', async () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
 
       const result = await service.validateUser('test@example.com', 'Password123');
 
@@ -146,7 +154,7 @@ describe('AuthService', () => {
 
     it('should return null for invalid password', async () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
       const result = await service.validateUser('test@example.com', 'WrongPassword');
 

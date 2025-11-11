@@ -154,8 +154,9 @@ export const ExpensesPanel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="h-[calc(100vh-12rem)] overflow-y-auto space-y-6 pr-2">
       {/* Header */}
+      <div className="bg-white pb-4 mb-4 border-b">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Mis Gastos</h2>
@@ -317,6 +318,7 @@ export const ExpensesPanel: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

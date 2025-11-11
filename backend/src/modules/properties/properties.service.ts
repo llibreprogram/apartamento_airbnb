@@ -118,8 +118,4 @@ export class PropertiesService {
       pages: Math.ceil(total / limit),
     };
   }
-
-  async getMyProperties(ownerId: string, page: number = 1, limit: number = 10) {
-    return this.findByOwner(ownerId, page, limit);
-  }
 }
