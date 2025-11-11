@@ -213,19 +213,8 @@ export function ReservationsPanel() {
       });
 
       // Limpiar formulario y cerrar modal
-      setFormData({
-        propertyId: '',
-        guestName: '',
-        guestEmail: '',
-        guestPhone: '',
-        checkIn: '',
-        checkOut: '',
-        numberOfGuests: 1,
-        totalPrice: 0,
-        notes: '',
-      });
       setShowModal(false);
-      setEditingReservation(null);
+      resetForm();
 
       // Recargar reservaciones
       fetchReservations(1, filterStatus);
@@ -236,7 +225,29 @@ export function ReservationsPanel() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      propertyId: '',
+      guestName: '',
+      guestEmail: '',
+      guestPhone: '',
+      checkIn: '',
+      checkOut: '',
+      numberOfGuests: 1,
+      totalPrice: 0,
+      notes: '',
+    });
+    setEditingReservation(null);
+    setError(null);
+  };
+
+  const handleOpenAddModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
   const handleEditReservation = (reservation: Reservation) => {
+    setError(null);
     setEditingReservation(reservation);
     setFormData({
       propertyId: reservation.propertyId,
@@ -276,19 +287,8 @@ export function ReservationsPanel() {
       });
 
       // Limpiar formulario y cerrar modal
-      setFormData({
-        propertyId: '',
-        guestName: '',
-        guestEmail: '',
-        guestPhone: '',
-        checkIn: '',
-        checkOut: '',
-        numberOfGuests: 1,
-        totalPrice: 0,
-        notes: '',
-      });
       setShowModal(false);
-      setEditingReservation(null);
+      resetForm();
 
       // Recargar reservaciones
       fetchReservations(currentPage, filterStatus, filterProperty);
@@ -338,7 +338,7 @@ export function ReservationsPanel() {
             <p className="text-gray-500">Total: {reservations.length} reservaciones</p>
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenAddModal}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold shadow-md"
           >
             ✓ Agregar Reservación
@@ -882,7 +882,7 @@ export function ReservationsPanel() {
                   type="button"
                   onClick={() => {
                     setShowModal(false);
-                    setEditingReservation(null);
+                    resetForm();
                   }}
                   className="flex-1 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 font-semibold"
                   disabled={submitting}
