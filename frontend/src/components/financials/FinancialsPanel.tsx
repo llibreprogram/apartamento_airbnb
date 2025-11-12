@@ -206,12 +206,45 @@ export function FinancialsPanel() {
     return <div className="text-center py-8">Cargando reportes financieros...</div>;
   }
 
-  const totalIncome = reports.reduce((sum, r) => sum + (typeof r.grossIncome === 'number' ? r.grossIncome : 0), 0);
-  const totalExpenses = reports.reduce((sum, r) => sum + (typeof r.totalExpenses === 'number' ? r.totalExpenses : 0), 0);
-  const totalProfit = reports.reduce((sum, r) => sum + (typeof r.netProfit === 'number' ? r.netProfit : 0), 0);
+  // Convertir strings a números usando parseFloat
+  const totalIncome = reports.reduce((sum, r) => {
+    const value = parseFloat(r.grossIncome?.toString() || '0');
+    return sum + (isNaN(value) ? 0 : value);
+  }, 0);
+  
+  const totalExpenses = reports.reduce((sum, r) => {
+    const value = parseFloat(r.totalExpenses?.toString() || '0');
+    return sum + (isNaN(value) ? 0 : value);
+  }, 0);
+  
+  const totalProfit = reports.reduce((sum, r) => {
+    const value = parseFloat(r.netProfit?.toString() || '0');
+    return sum + (isNaN(value) ? 0 : value);
+  }, 0);
+  
   const avgROI = reports.length > 0 
-    ? (reports.reduce((sum, r) => sum + (typeof r.roi === 'number' ? r.roi : 0), 0) / reports.length)
+    ? reports.reduce((sum, r) => {
+        const value = parseFloat(r.roi?.toString() || '0');
+        return sum + (isNaN(value) ? 0 : value);
+      }, 0) / reports.length
     : 0;
+
+  console.log('📊 Financial Stats:', {
+    reports: reports.length,
+    totalIncome,
+    totalExpenses,
+    totalProfit,
+    avgROI,
+    reportsData: reports.map(r => ({
+      property: r.propertyName,
+      grossIncome: r.grossIncome,
+      grossIncomeType: typeof r.grossIncome,
+      totalExpenses: r.totalExpenses,
+      totalExpensesType: typeof r.totalExpenses,
+      netProfit: r.netProfit,
+      roi: r.roi
+    }))
+  });
 
   return (
     <div className="h-[calc(100vh-12rem)] overflow-y-auto space-y-6 pr-2">
