@@ -1,6 +1,11 @@
 {
   "name": "frontend",
   "version": "0.1.0",
+  "author": {
+    "name": "Rafael Llibre",
+    "email": "haciendallibre@gmail.com"
+  },
+  "license": "MIT",
   "private": true,
   "type": "module",
   "dependencies": {

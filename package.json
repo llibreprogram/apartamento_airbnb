@@ -2,6 +2,11 @@
   "name": "apartamento-airbnb-management",
   "version": "0.1.0",
   "description": "Sistema de gestión de apartamentos en alquiler vacacional",
+  "author": {
+    "name": "Rafael Llibre",
+    "email": "haciendallibre@gmail.com"
+  },
+  "license": "MIT",
   "private": true,
   "workspaces": [
     "backend",

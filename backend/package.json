@@ -2,9 +2,12 @@
   "name": "backend",
   "version": "0.0.1",
   "description": "NestJS Backend para Gestión de Apartamentos",
-  "author": "Your Name",
+  "author": {
+    "name": "Rafael Llibre",
+    "email": "haciendallibre@gmail.com"
+  },
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",

@@ -303,12 +303,20 @@ Las contribuciones son bienvenidas. Por favor:
 
 ## 📄 Licencia
 
-MIT License - Ver archivo LICENSE para más detalles
+MIT License - Ver archivo [LICENSE](./LICENSE) para más detalles
 
-## 📧 Soporte
+## � Autor
 
-Para reportar issues o sugerencias: [issues@project.com](mailto:issues@project.com)
+**Rafael Llibre**
+- Email: [haciendallibre@gmail.com](mailto:haciendallibre@gmail.com)
+- GitHub: [@llibreprogram](https://github.com/llibreprogram)
+
+## �📧 Soporte
+
+Para reportar issues o sugerencias: [haciendallibre@gmail.com](mailto:haciendallibre@gmail.com)
 
 ---
 
-**Última actualización:** Octubre 2025
+**Copyright © 2025 Rafael Llibre. Todos los derechos reservados.**
+
+**Última actualización:** Noviembre 2025
