@@ -2,6 +2,14 @@
 
 ## Archivos Incluidos
 
+### 📄 `crear-acceso-directo.vbs` ⭐ (Ejecutar primero)
+Script VBScript que crea automáticamente un acceso directo en el Escritorio.
+
+**Uso:**
+1. Haz doble clic en `crear-acceso-directo.vbs` (solo una vez)
+2. Aparecerá "Actualizar Apartamentos" en tu Escritorio
+3. Ya puedes actualizar desde el escritorio con doble clic
+
 ### 📄 `actualizar.bat` (Recomendado)
 Script simple de doble-clic para actualizar el sistema.
 
@@ -46,22 +54,21 @@ npm install
 
 ## 📋 Uso Diario
 
-### Opción 1: Doble clic (Más fácil)
+### Opción 1: Acceso directo en el Escritorio (Más fácil) ⭐
+1. Haz doble clic en `crear-acceso-directo.vbs` (solo una vez)
+2. Se creará el acceso directo "Actualizar Apartamentos" en tu Escritorio
+3. Ahora solo haz doble clic en el acceso directo del escritorio para actualizar
+
+### Opción 2: Doble clic en el proyecto
 1. Abre el explorador de Windows
 2. Navega a `C:\Users\Yulia\apartamento_airbnb`
 3. Haz doble clic en `actualizar.bat`
 
-### Opción 2: Desde PowerShell
+### Opción 3: Desde PowerShell
 ```powershell
 cd C:\Users\Yulia\apartamento_airbnb
 .\update-windows.ps1
 ```
-
-### Opción 3: Crear acceso directo en el Escritorio
-1. Click derecho en `actualizar.bat`
-2. Seleccionar "Crear acceso directo"
-3. Mover el acceso directo al Escritorio
-4. Ahora puedes actualizar con doble clic desde el escritorio
 
 ## 🔧 Lo que hace el script automáticamente
 
