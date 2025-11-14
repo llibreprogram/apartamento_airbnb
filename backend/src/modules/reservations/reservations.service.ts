@@ -62,8 +62,13 @@ export class ReservationsService {
       throw new BadRequestException('Check-in date must be before check-out date');
     }
 
-    // Validar que no sean fechas en el pasado
-    if (new Date(checkIn) < new Date()) {
+    // Validar que no sean fechas en el pasado (permitir día actual)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Resetear a inicio del día
+    const checkInDate = new Date(checkIn);
+    checkInDate.setHours(0, 0, 0, 0);
+    
+    if (checkInDate < today) {
       throw new BadRequestException('Check-in date cannot be in the past');
     }
 

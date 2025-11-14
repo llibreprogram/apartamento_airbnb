@@ -135,16 +135,18 @@ export function ReservationsPanel() {
           propertyId: formData.propertyId
         });
         try {
-          // Crear una reserva temporal con precio 0 para obtener el precio calculado
-          const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
-          const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
+          // Convertir fechas correctamente sin timezone issues
+          const checkInDate = new Date(formData.checkIn);
+          const checkInISO = checkInDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
           
-          // Hacer una petición simulada para obtener el precio
-          // El backend calculará el precio con precios dinámicos
+          const checkOutDate = new Date(formData.checkOut);
+          const checkOutISO = checkOutDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+          
+          // Hacer una petición para obtener el precio calculado con precios dinámicos
           const response = await apiClient.post('/reservations/calculate-price', {
             propertyId: formData.propertyId,
-            checkIn: checkInDate,
-            checkOut: checkOutDate,
+            checkIn: checkInISO,
+            checkOut: checkOutISO,
           });
           
           console.log('Price calculated from backend:', response.data.totalPrice);
@@ -248,9 +250,19 @@ export function ReservationsPanel() {
         return;
       }
 
-      // Convertir fechas a ISO 8601
-      const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
-      const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
+      // Convertir fechas correctamente sin timezone issues
+      // Usar el mismo formato que en handleUpdateReservation (que funciona bien)
+      const checkInDate = new Date(formData.checkIn);
+      const checkInISO = checkInDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+      
+      const checkOutDate = new Date(formData.checkOut);
+      const checkOutISO = checkOutDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+      console.log('Creating reservation with dates:', {
+        checkIn: checkInISO,
+        checkOut: checkOutISO,
+        totalPrice: formData.totalPrice
+      });
 
       // Crear reservación
       const response = await apiClient.post('/reservations', {
@@ -258,8 +270,8 @@ export function ReservationsPanel() {
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
         guestPhone: formData.guestPhone || undefined,
-        checkIn: checkInDate,
-        checkOut: checkOutDate,
+        checkIn: checkInISO,
+        checkOut: checkOutISO,
         numberOfGuests: parseInt(formData.numberOfGuests.toString()),
         totalPrice: parseFloat(formData.totalPrice.toString()),
         notes: formData.notes || undefined,
