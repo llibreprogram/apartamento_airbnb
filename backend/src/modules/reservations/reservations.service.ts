@@ -63,12 +63,12 @@ export class ReservationsService {
     }
 
     // Validar que no sean fechas en el pasado (permitir día actual)
+    // Usar solo la parte de fecha para evitar problemas de timezone
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Resetear a inicio del día
-    const checkInDate = new Date(checkIn);
-    checkInDate.setHours(0, 0, 0, 0);
+    const todayDateString = today.toISOString().split('T')[0]; // "2025-11-14"
+    const checkInDateString = new Date(checkIn).toISOString().split('T')[0]; // "2025-11-14"
     
-    if (checkInDate < today) {
+    if (checkInDateString < todayDateString) {
       throw new BadRequestException('Check-in date cannot be in the past');
     }
 

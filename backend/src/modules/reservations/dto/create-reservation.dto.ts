@@ -31,30 +31,34 @@ export class CreateReservationDto {
   @IsNotEmpty()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
-      // Handle both ISO8601 and simple date format (YYYY-MM-DD)
+      // Si es formato YYYY-MM-DD, devolverlo tal cual para evitar timezone issues
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return value;
+      }
+      // Si es ISO8601, extraer solo la parte de fecha
       if (value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        return new Date(value);
-      } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(value + 'T00:00:00Z');
+        return value.split('T')[0];
       }
     }
-    return new Date(value);
+    return value;
   })
-  checkIn: Date;
+  checkIn: string | Date;
 
   @IsNotEmpty()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
-      // Handle both ISO8601 and simple date format (YYYY-MM-DD)
+      // Si es formato YYYY-MM-DD, devolverlo tal cual para evitar timezone issues
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return value;
+      }
+      // Si es ISO8601, extraer solo la parte de fecha
       if (value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        return new Date(value);
-      } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(value + 'T00:00:00Z');
+        return value.split('T')[0];
       }
     }
-    return new Date(value);
+    return value;
   })
-  checkOut: Date;
+  checkOut: string | Date;
 
   @IsNumber()
   @Min(1)
@@ -93,29 +97,35 @@ export class UpdateReservationDto {
   @Transform(({ value }) => {
     if (!value) return undefined;
     if (typeof value === 'string') {
+      // Si es formato YYYY-MM-DD, devolverlo tal cual
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return value;
+      }
+      // Si es ISO8601, extraer solo la parte de fecha
       if (value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        return new Date(value);
-      } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(value + 'T00:00:00Z');
+        return value.split('T')[0];
       }
     }
-    return new Date(value);
+    return value;
   })
-  checkIn?: Date;
+  checkIn?: string | Date;
 
   @IsOptional()
   @Transform(({ value }) => {
     if (!value) return undefined;
     if (typeof value === 'string') {
+      // Si es formato YYYY-MM-DD, devolverlo tal cual
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return value;
+      }
+      // Si es ISO8601, extraer solo la parte de fecha
       if (value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-        return new Date(value);
-      } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(value + 'T00:00:00Z');
+        return value.split('T')[0];
       }
     }
-    return new Date(value);
+    return value;
   })
-  checkOut?: Date;
+  checkOut?: string | Date;
 
   @IsNumber()
   @Min(1)

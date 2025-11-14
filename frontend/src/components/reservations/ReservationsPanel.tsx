@@ -135,18 +135,12 @@ export function ReservationsPanel() {
           propertyId: formData.propertyId
         });
         try {
-          // Convertir fechas correctamente sin timezone issues
-          const checkInDate = new Date(formData.checkIn);
-          const checkInISO = checkInDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-          
-          const checkOutDate = new Date(formData.checkOut);
-          const checkOutISO = checkOutDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-          
-          // Hacer una petición para obtener el precio calculado con precios dinámicos
+          // Enviar fechas directamente sin conversión para evitar timezone issues
+          // formData.checkIn y formData.checkOut ya están en formato "YYYY-MM-DD"
           const response = await apiClient.post('/reservations/calculate-price', {
             propertyId: formData.propertyId,
-            checkIn: checkInISO,
-            checkOut: checkOutISO,
+            checkIn: formData.checkIn,
+            checkOut: formData.checkOut,
           });
           
           console.log('Price calculated from backend:', response.data.totalPrice);
@@ -250,17 +244,11 @@ export function ReservationsPanel() {
         return;
       }
 
-      // Convertir fechas correctamente sin timezone issues
-      // Usar el mismo formato que en handleUpdateReservation (que funciona bien)
-      const checkInDate = new Date(formData.checkIn);
-      const checkInISO = checkInDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-      
-      const checkOutDate = new Date(formData.checkOut);
-      const checkOutISO = checkOutDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-
+      // Enviar fechas como strings YYYY-MM-DD sin conversión a Date
+      // para evitar problemas de timezone con PostgreSQL tipo 'date'
       console.log('Creating reservation with dates:', {
-        checkIn: checkInISO,
-        checkOut: checkOutISO,
+        checkIn: formData.checkIn,
+        checkOut: formData.checkOut,
         totalPrice: formData.totalPrice
       });
 
@@ -270,8 +258,8 @@ export function ReservationsPanel() {
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
         guestPhone: formData.guestPhone || undefined,
-        checkIn: checkInISO,
-        checkOut: checkOutISO,
+        checkIn: formData.checkIn,  // Enviar como "YYYY-MM-DD"
+        checkOut: formData.checkOut,  // Enviar como "YYYY-MM-DD"
         numberOfGuests: parseInt(formData.numberOfGuests.toString()),
         totalPrice: parseFloat(formData.totalPrice.toString()),
         notes: formData.notes || undefined,
@@ -339,12 +327,14 @@ export function ReservationsPanel() {
     setError(null);
 
     try {
-      const checkInDate = new Date(formData.checkIn + 'T00:00:00Z').toISOString();
-      const checkOutDate = new Date(formData.checkOut + 'T00:00:00Z').toISOString();
+      // Enviar fechas como strings YYYY-MM-DD sin conversión
+      // para evitar problemas de timezone con PostgreSQL tipo 'date'
+      const checkInDate = formData.checkIn;
+      const checkOutDate = formData.checkOut;
 
-      // Verificar si las fechas cambiaron
-      const originalCheckIn = new Date(editingReservation.checkIn).toISOString();
-      const originalCheckOut = new Date(editingReservation.checkOut).toISOString();
+      // Verificar si las fechas cambiaron comparando strings directamente
+      const originalCheckIn = new Date(editingReservation.checkIn).toISOString().split('T')[0];
+      const originalCheckOut = new Date(editingReservation.checkOut).toISOString().split('T')[0];
       const datesChanged = checkInDate !== originalCheckIn || checkOutDate !== originalCheckOut;
 
       // Si las fechas cambiaron, enviar totalPrice: 0 para forzar recálculo con precios dinámicos
@@ -356,8 +346,8 @@ export function ReservationsPanel() {
         guestName: formData.guestName,
         guestEmail: formData.guestEmail || undefined,
         guestPhone: formData.guestPhone || undefined,
-        checkIn: checkInDate,
-        checkOut: checkOutDate,
+        checkIn: checkInDate,  // Enviar como "YYYY-MM-DD"
+        checkOut: checkOutDate,  // Enviar como "YYYY-MM-DD"
         numberOfGuests: parseInt(formData.numberOfGuests.toString()),
         totalPrice: totalPriceToSend,
         notes: formData.notes || undefined,
