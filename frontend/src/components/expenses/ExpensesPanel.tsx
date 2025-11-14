@@ -38,6 +38,7 @@ export const ExpensesPanel: React.FC = () => {
     'taxes',
     'repairs',
     'supplies',
+    'paypal_commission',
     'other',
   ];
 
@@ -49,6 +50,7 @@ export const ExpensesPanel: React.FC = () => {
     taxes: 'Impuestos',
     repairs: 'Reparaciones',
     supplies: 'Suministros',
+    paypal_commission: 'Comisión PayPal',
     other: 'Otros',
   };
 
@@ -458,6 +460,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
               <option value="taxes">Impuestos</option>
               <option value="repairs">Reparaciones</option>
               <option value="supplies">Suministros</option>
+              <option value="paypal_commission">Comisión PayPal</option>
               <option value="other">Otros</option>
             </select>
           </div>

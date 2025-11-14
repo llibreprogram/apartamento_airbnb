@@ -18,6 +18,7 @@ export enum ExpenseCategory {
   TAXES = 'taxes',
   REPAIRS = 'repairs',
   SUPPLIES = 'supplies',
+  PAYPAL_COMMISSION = 'paypal_commission',
   OTHER = 'other',
 }
 
