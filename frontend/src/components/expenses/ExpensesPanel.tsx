@@ -33,6 +33,9 @@ export const ExpensesPanel: React.FC = () => {
   const categories = [
     'maintenance',
     'utilities',
+    'electricity',
+    'internet',
+    'condo_fees',
     'cleaning',
     'insurance',
     'taxes',
@@ -45,6 +48,9 @@ export const ExpensesPanel: React.FC = () => {
   const categoryLabels: Record<string, string> = {
     maintenance: 'Mantenimiento',
     utilities: 'Servicios',
+    electricity: 'Electricidad',
+    internet: 'Internet',
+    condo_fees: 'Derecho de Condominio',
     cleaning: 'Limpieza',
     insurance: 'Seguros',
     taxes: 'Impuestos',
@@ -455,6 +461,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
             >
               <option value="maintenance">Mantenimiento</option>
               <option value="utilities">Servicios</option>
+              <option value="electricity">Electricidad</option>
+              <option value="internet">Internet</option>
+              <option value="condo_fees">Derecho de Condominio</option>
               <option value="cleaning">Limpieza</option>
               <option value="insurance">Seguros</option>
               <option value="taxes">Impuestos</option>
