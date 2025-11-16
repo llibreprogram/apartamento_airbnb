@@ -181,3 +181,29 @@ export class CompleteReservationDto {
   @IsString()
   electricityNotes?: string;
 }
+
+export class RegisterElectricityCostDto {
+  @IsNumber()
+  @Min(0)
+  @IsNotEmpty()
+  electricityActualCost: number; // Costo real pagado por el propietario
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (typeof value === 'string') {
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return value;
+      }
+      if (value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+        return value.split('T')[0];
+      }
+    }
+    return value;
+  })
+  electricityBillDate?: string | Date;
+
+  @IsOptional()
+  @IsString()
+  electricityBillNotes?: string;
+}

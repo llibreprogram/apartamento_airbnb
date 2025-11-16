@@ -99,6 +99,16 @@ export class Reservation {
   @Column('text', { nullable: true })
   electricityNotes: string; // Notas sobre el cobro de electricidad
 
+  // Costo real de electricidad (lo que pagó el propietario a la compañía eléctrica)
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  electricityActualCost: number; // Gasto real del propietario en USD
+
+  @Column('date', { nullable: true })
+  electricityBillDate: Date; // Fecha de la factura eléctrica
+
+  @Column('text', { nullable: true })
+  electricityBillNotes: string; // Notas sobre la factura real
+
   @CreateDateColumn()
   createdAt: Date;
 

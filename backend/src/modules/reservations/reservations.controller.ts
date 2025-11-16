@@ -24,6 +24,7 @@ import {
   UpdateReservationDto,
   CancelReservationDto,
   CompleteReservationDto,
+  RegisterElectricityCostDto,
 } from './dto/create-reservation.dto';
 
 @ApiTags('Reservations')
@@ -187,6 +188,21 @@ export class ReservationsController {
     @Req() req: any,
   ) {
     return this.reservationsService.cancel(id, req.user.id, cancelReservationDto);
+  }
+
+  @Post(':id/register-electricity-cost')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Register the actual electricity cost paid by owner (Admin)' })
+  @ApiResponse({ status: 200, description: 'Electricity cost registered' })
+  @ApiResponse({ status: 400, description: 'Invalid data or reservation not completed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Reservation not found' })
+  registerElectricityCost(
+    @Param('id') id: string,
+    @Body() dto: RegisterElectricityCostDto,
+  ) {
+    return this.reservationsService.registerElectricityCost(id, dto);
   }
 
   @Delete(':id')

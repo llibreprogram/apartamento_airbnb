@@ -292,6 +292,99 @@ export class FinancialsService {
     return this.financialsRepository.save(financial);
   }
 
+  // Reporte de electricidad: cobrado vs pagado
+  async getElectricityReport(propertyId?: string, period?: string): Promise<any> {
+    let query = this.reservationsRepository
+      .createQueryBuilder('reservation')
+      .select([
+        'reservation.id as id',
+        'reservation.propertyId as propertyId',
+        'reservation.guestName as guestName',
+        'reservation.checkIn as checkIn',
+        'reservation.checkOut as checkOut',
+        'reservation.electricityConsumed as electricityConsumed',
+        'reservation.electricityCharge as electricityCharge',
+        'reservation.electricityActualCost as electricityActualCost',
+        'reservation.electricityRate as electricityRate',
+        'reservation.electricityPaymentMethod as electricityPaymentMethod',
+        'reservation.electricityBillDate as electricityBillDate',
+        '(reservation.electricityCharge - COALESCE(reservation.electricityActualCost, 0)) as difference',
+      ])
+      .where('reservation.status = :status', { status: 'completed' })
+      .andWhere('reservation.electricityCharge IS NOT NULL');
+
+    // Filtrar por propiedad si se especifica
+    if (propertyId) {
+      query = query.andWhere('reservation.propertyId = :propertyId', { propertyId });
+    }
+
+    // Filtrar por período si se especifica (YYYY-MM)
+    if (period) {
+      const [year, month] = period.split('-');
+      const startDate = new Date(`${year}-${month}-01`);
+      const endDate = new Date(parseInt(year), parseInt(month), 0);
+      query = query.andWhere('reservation.checkIn >= :startDate', { startDate });
+      query = query.andWhere('reservation.checkOut <= :endDate', { endDate });
+    }
+
+    const reservations = await query.getRawMany();
+
+    // Calcular totales
+    let totalCharged = 0;
+    let totalActualCost = 0;
+    let totalOwnerContribution = 0;
+    let totalAdminProfit = 0;
+    let pendingBills = 0;
+
+    reservations.forEach((res) => {
+      const charged = parseFloat(res.electricityCharge || 0);
+      const actualCost = parseFloat(res.electricityActualCost || 0);
+      const difference = parseFloat(res.difference || 0);
+
+      totalCharged += charged;
+      totalActualCost += actualCost;
+
+      if (!res.electricityActualCost) {
+        pendingBills++;
+      } else if (difference < 0) {
+        // El propietario pagó más que lo cobrado
+        totalOwnerContribution += Math.abs(difference);
+      } else if (difference > 0) {
+        // Se cobró más que el costo real
+        totalAdminProfit += difference;
+      }
+    });
+
+    return {
+      summary: {
+        totalCharged: parseFloat(totalCharged.toFixed(2)),
+        totalActualCost: parseFloat(totalActualCost.toFixed(2)),
+        totalOwnerContribution: parseFloat(totalOwnerContribution.toFixed(2)),
+        totalAdminProfit: parseFloat(totalAdminProfit.toFixed(2)),
+        netElectricityResult: parseFloat((totalCharged - totalActualCost).toFixed(2)),
+        pendingBills: pendingBills,
+        completedBills: reservations.length - pendingBills,
+      },
+      details: reservations.map((res) => ({
+        id: res.id,
+        propertyId: res.propertyId,
+        guestName: res.guestName,
+        checkIn: res.checkIn,
+        checkOut: res.checkOut,
+        electricityConsumed: parseFloat(res.electricityConsumed || 0),
+        electricityCharge: parseFloat(res.electricityCharge || 0),
+        electricityActualCost: parseFloat(res.electricityActualCost || 0),
+        electricityRate: parseFloat(res.electricityRate || 0),
+        difference: parseFloat(res.difference || 0),
+        ownerMustPay: res.difference < 0 ? Math.abs(parseFloat(res.difference)) : 0,
+        adminProfit: res.difference > 0 ? parseFloat(res.difference) : 0,
+        billStatus: res.electricityActualCost ? 'registered' : 'pending',
+        electricityBillDate: res.electricityBillDate,
+        electricityPaymentMethod: res.electricityPaymentMethod,
+      })),
+    };
+  }
+
   // Eliminar reporte
   async remove(id: string): Promise<void> {
     const financial = await this.findOne(id);

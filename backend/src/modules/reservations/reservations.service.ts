@@ -359,6 +359,43 @@ export class ReservationsService {
     return this.reservationsRepository.save(reservation);
   }
 
+  async registerElectricityCost(id: string, dto: any) {
+    const reservation = await this.findOne(id);
+
+    // Verificar que la reserva esté completada
+    if (reservation.status !== ReservationStatus.COMPLETED) {
+      throw new BadRequestException('Cannot register electricity cost for non-completed reservation');
+    }
+
+    // Verificar que tenga datos de electricidad cobrada
+    if (!reservation.electricityCharge) {
+      throw new BadRequestException('Reservation has no electricity charge recorded');
+    }
+
+    // Actualizar con el costo real
+    reservation.electricityActualCost = dto.electricityActualCost;
+    reservation.electricityBillDate = dto.electricityBillDate || new Date();
+    reservation.electricityBillNotes = dto.electricityBillNotes;
+
+    await this.reservationsRepository.save(reservation);
+
+    // Calcular diferencia para mostrar al usuario
+    const difference = reservation.electricityCharge - dto.electricityActualCost;
+    const ownerContribution = difference < 0 ? Math.abs(difference) : 0;
+    const adminProfit = difference > 0 ? difference : 0;
+
+    return {
+      message: 'Electricity cost registered successfully',
+      data: {
+        electricityCharged: reservation.electricityCharge,
+        electricityActualCost: dto.electricityActualCost,
+        difference: difference,
+        ownerContribution: ownerContribution, // Lo que el propietario debe pagar
+        adminProfit: adminProfit, // Ganancia si se cobró más de lo que costó
+      },
+    };
+  }
+
   async remove(id: string) {
     const reservation = await this.findOne(id);
     await this.reservationsRepository.remove(reservation);

@@ -102,6 +102,19 @@ export class FinancialsController {
     return this.financialsService.getComparative(propertyId, period1, period2);
   }
 
+  @Get('electricity-report')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get electricity report: charged vs actual cost' })
+  @ApiQuery({ name: 'propertyId', required: false, type: String })
+  @ApiQuery({ name: 'period', required: false, type: String, example: '2025-11', description: 'Format: YYYY-MM' })
+  async getElectricityReport(
+    @Query('propertyId') propertyId?: string,
+    @Query('period') period?: string,
+  ) {
+    return this.financialsService.getElectricityReport(propertyId, period);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get financial report by ID' })
   @ApiParam({ name: 'id', type: String })
