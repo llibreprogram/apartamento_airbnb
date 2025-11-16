@@ -28,7 +28,7 @@ export const RegisterElectricityCostModal: React.FC<RegisterElectricityCostModal
   const calculateDifference = () => {
     if (!actualCost) return null;
     const cost = parseFloat(actualCost);
-    const charged = reservation.electricityCharge;
+    const charged = Number(reservation.electricityCharge || 0);
     const diff = charged - cost;
     return {
       difference: diff,
@@ -78,15 +78,15 @@ export const RegisterElectricityCostModal: React.FC<RegisterElectricityCostModal
           </p>
           <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
             <div>
-              <span className="font-medium">Consumo:</span> {reservation.electricityConsumed} kWh
+              <span className="font-medium">Consumo:</span> {reservation.electricityConsumed || 0} kWh
             </div>
             <div>
-              <span className="font-medium">Tarifa aplicada:</span> ${reservation.electricityRate}/kWh
+              <span className="font-medium">Tarifa aplicada:</span> ${Number(reservation.electricityRate || 0).toFixed(2)}/kWh
             </div>
             <div className="col-span-2">
               <span className="font-medium">Cobrado al huésped:</span>{' '}
               <span className="text-lg font-bold text-blue-600">
-                ${reservation.electricityCharge.toFixed(2)}
+                ${Number(reservation.electricityCharge || 0).toFixed(2)}
               </span>
             </div>
           </div>
