@@ -64,6 +64,19 @@ export class Expense {
   @Column('boolean', { default: false })
   isPaid: boolean;
 
+  // Campos específicos para gastos de electricidad
+  @Column('varchar', { length: 7, nullable: true })
+  electricityPeriod: string; // Formato: YYYY-MM
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  electricityTotalCharged: number; // Total cobrado a huéspedes ese mes
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  electricityDifference: number; // Diferencia (cobrado - pagado)
+
+  @Column('integer', { nullable: true })
+  electricityReservationsCount: number; // Cantidad de reservas con electricidad ese mes
+
   @CreateDateColumn()
   createdAt: Date;
 

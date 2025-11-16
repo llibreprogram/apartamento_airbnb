@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Expense, ExpenseCategory } from './entities/expense.entity';
 import { CreateExpenseDto, UpdateExpenseDto, FilterExpenseDto } from './dto/create-expense.dto';
+import { Reservation } from '@/modules/reservations/entities/reservation.entity';
 
 @Injectable()
 export class ExpensesService {
   constructor(
     @InjectRepository(Expense)
     private readonly expensesRepository: Repository<Expense>,
+    @InjectRepository(Reservation)
+    private readonly reservationsRepository: Repository<Reservation>,
   ) {}
 
   async create(createExpenseDto: CreateExpenseDto) {
@@ -172,6 +175,63 @@ export class ExpensesService {
     const expense = await this.findOne(id);
     expense.isPaid = true;
     return this.expensesRepository.save(expense);
+  }
+
+  // Calcular resumen de electricidad para un período (usado al crear gasto de electricidad)
+  async getElectricitySummary(propertyId: string, period: string) {
+    // Parsear período YYYY-MM
+    const [year, month] = period.split('-');
+    const startDate = new Date(`${year}-${month}-01`);
+    const endDate = new Date(parseInt(year), parseInt(month), 0); // Último día del mes
+
+    // Obtener todas las reservas completadas con electricidad en ese período
+    const reservations = await this.reservationsRepository
+      .createQueryBuilder('reservation')
+      .select([
+        'reservation.id as id',
+        'reservation.guestName as guestName',
+        'reservation.checkIn as checkIn',
+        'reservation.checkOut as checkOut',
+        'reservation.electricityConsumed as electricityConsumed',
+        'reservation.electricityCharge as electricityCharge',
+        'reservation.electricityRate as electricityRate',
+        'reservation.meterReadingStart as meterReadingStart',
+        'reservation.meterReadingEnd as meterReadingEnd',
+      ])
+      .where('reservation.propertyId = :propertyId', { propertyId })
+      .andWhere('reservation.status = :status', { status: 'completed' })
+      .andWhere('reservation.electricityCharge IS NOT NULL')
+      .andWhere('reservation.checkIn >= :startDate', { startDate })
+      .andWhere('reservation.checkOut <= :endDate', { endDate })
+      .getRawMany();
+
+    // Calcular totales
+    const totalCharged = reservations.reduce((sum, res) => 
+      sum + parseFloat(res.electricityCharge || 0), 0
+    );
+    
+    const totalConsumed = reservations.reduce((sum, res) => 
+      sum + parseFloat(res.electricityConsumed || 0), 0
+    );
+
+    return {
+      period,
+      propertyId,
+      totalCharged: parseFloat(totalCharged.toFixed(2)),
+      totalConsumed: parseFloat(totalConsumed.toFixed(2)),
+      reservationsCount: reservations.length,
+      reservations: reservations.map(res => ({
+        id: res.id,
+        guestName: res.guestName,
+        checkIn: res.checkIn,
+        checkOut: res.checkOut,
+        electricityConsumed: parseFloat(res.electricityConsumed || 0),
+        electricityCharge: parseFloat(res.electricityCharge || 0),
+        electricityRate: parseFloat(res.electricityRate || 0),
+        meterReadingStart: parseInt(res.meterReadingStart || 0),
+        meterReadingEnd: parseInt(res.meterReadingEnd || 0),
+      })),
+    };
   }
 
   async remove(id: string) {

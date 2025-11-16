@@ -186,6 +186,19 @@ export class ExpensesController {
     );
   }
 
+  @Get('electricity-summary/:propertyId/:period')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get electricity summary for a period (YYYY-MM) before creating expense' })
+  @ApiResponse({ status: 200, description: 'Electricity summary with total charged and reservations' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  getElectricitySummary(
+    @Param('propertyId') propertyId: string,
+    @Param('period') period: string,
+  ) {
+    return this.expensesService.getElectricitySummary(propertyId, period);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get expense by ID' })
   @ApiResponse({ status: 200, description: 'Expense details' })

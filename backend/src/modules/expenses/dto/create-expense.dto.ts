@@ -53,6 +53,23 @@ export class CreateExpenseDto {
   @IsBoolean()
   @IsOptional()
   isPaid?: boolean;
+
+  // Campos opcionales para gastos de electricidad
+  @IsString()
+  @IsOptional()
+  electricityPeriod?: string; // YYYY-MM
+
+  @IsNumber()
+  @IsOptional()
+  electricityTotalCharged?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricityDifference?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricityReservationsCount?: number;
 }
 
 export class UpdateExpenseDto {
