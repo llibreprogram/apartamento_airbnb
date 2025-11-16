@@ -29,6 +29,15 @@ interface ExpenseCategory {
   amount: number;
 }
 
+interface ElectricityData {
+  period: string;
+  totalCharged: number;
+  totalPaid: number;
+  difference: number;
+  reservationsCount: number;
+  expensesCount: number;
+}
+
 // Helper function to safely format numbers
 const formatCurrency = (value: any, decimals = 2): string => {
   const num = typeof value === 'number' ? value : parseFloat(value) || 0;
@@ -46,6 +55,7 @@ export function FinancialsPanel() {
   const [viewMode, setViewMode] = useState<'general' | 'property'>('general');
   const [summaryData, setSummaryData] = useState<any>(null);
   const [propertyExpenses, setPropertyExpenses] = useState<ExpenseCategory[]>([]);
+  const [electricityData, setElectricityData] = useState<ElectricityData | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<'es' | 'en' | 'ru'>(
     (i18n.language.split('-')[0] as 'es' | 'en' | 'ru') || 'es'
   );
@@ -102,6 +112,7 @@ export function FinancialsPanel() {
     if (selectedProperty) {
       const period = selectedPeriod || getCurrentPeriod();
       fetchPropertyExpenses(selectedProperty, period);
+      fetchElectricityData(selectedProperty, period);
     }
   }, [selectedProperty, selectedPeriod]);
 
@@ -164,6 +175,53 @@ export function FinancialsPanel() {
     } catch (err: any) {
       console.error('Error fetching expenses:', err);
       setPropertyExpenses([]);
+    }
+  };
+
+  const fetchElectricityData = async (propertyId: string, period: string) => {
+    try {
+      // Obtener resumen de electricidad para el período
+      const summaryResponse = await apiClient.get(
+        `/expenses/electricity-summary/${propertyId}/${period}`
+      );
+      
+      // Obtener gastos de electricidad para el período
+      const [year, month] = period.split('-');
+      const startDateStr = `${year}-${month.padStart(2, '0')}-01T00:00:00.000Z`;
+      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+      const endDateStr = `${year}-${month.padStart(2, '0')}-${String(lastDay).padStart(2, '0')}T23:59:59.999Z`;
+      
+      const expensesResponse = await apiClient.get(
+        `/expenses/property/${propertyId}?startDate=${startDateStr}&endDate=${endDateStr}&category=utilities`
+      );
+      
+      const expenses = Array.isArray(expensesResponse.data) 
+        ? expensesResponse.data 
+        : (expensesResponse.data?.data || []);
+      
+      // Filtrar solo gastos con electricidad
+      const electricityExpenses = expenses.filter(
+        (exp: any) => exp.electricityPeriod === period
+      );
+      
+      const totalPaid = electricityExpenses.reduce(
+        (sum: number, exp: any) => sum + (parseFloat(exp.amount) || 0),
+        0
+      );
+      
+      const summary = summaryResponse.data;
+      
+      setElectricityData({
+        period,
+        totalCharged: summary.totalCharged || 0,
+        totalPaid,
+        difference: (summary.totalCharged || 0) - totalPaid,
+        reservationsCount: summary.reservationsCount || 0,
+        expensesCount: electricityExpenses.length,
+      });
+    } catch (err: any) {
+      console.error('Error fetching electricity data:', err);
+      setElectricityData(null);
     }
   };
 
@@ -377,6 +435,123 @@ export function FinancialsPanel() {
               </div>
             );
           })()}
+
+          {/* Electricity Report Section */}
+          {electricityData && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <span>⚡</span>
+                <span>Reporte de Electricidad - {electricityData.period}</span>
+              </h3>
+              
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {/* Total Cobrado */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">💰</span>
+                    <span className="text-sm font-medium text-green-700">Cobrado a Huéspedes</span>
+                  </div>
+                  <div className="text-3xl font-bold text-green-600">
+                    ${formatCurrency(electricityData.totalCharged)}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {electricityData.reservationsCount} reserva(s)
+                  </div>
+                </div>
+
+                {/* Total Pagado */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">🧾</span>
+                    <span className="text-sm font-medium text-red-700">Factura Pagada</span>
+                  </div>
+                  <div className="text-3xl font-bold text-red-600">
+                    ${formatCurrency(electricityData.totalPaid)}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {electricityData.expensesCount} gasto(s)
+                  </div>
+                </div>
+
+                {/* Diferencia */}
+                <div className={`border rounded-lg p-4 ${
+                  electricityData.difference > 0 
+                    ? 'bg-blue-50 border-blue-200'
+                    : electricityData.difference < 0
+                    ? 'bg-yellow-50 border-yellow-200'
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-2xl">
+                      {electricityData.difference > 0 ? '✅' : electricityData.difference < 0 ? '⚠️' : '✓'}
+                    </span>
+                    <span className={`text-sm font-medium ${
+                      electricityData.difference > 0 
+                        ? 'text-blue-700'
+                        : electricityData.difference < 0
+                        ? 'text-yellow-700'
+                        : 'text-gray-700'
+                    }`}>
+                      {electricityData.difference > 0 
+                        ? 'Ganancia'
+                        : electricityData.difference < 0
+                        ? 'Propietario debe pagar'
+                        : 'Sin diferencia'}
+                    </span>
+                  </div>
+                  <div className={`text-3xl font-bold ${
+                    electricityData.difference > 0 
+                      ? 'text-blue-600'
+                      : electricityData.difference < 0
+                      ? 'text-yellow-600'
+                      : 'text-gray-600'
+                  }`}>
+                    {electricityData.difference > 0 ? '+' : ''}${formatCurrency(Math.abs(electricityData.difference))}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {((electricityData.totalCharged / (electricityData.totalPaid || 1) - 1) * 100).toFixed(1)}% margen
+                  </div>
+                </div>
+              </div>
+
+              {/* Explicación */}
+              <div className={`rounded-lg p-4 ${
+                electricityData.difference > 0 
+                  ? 'bg-blue-50 border border-blue-200'
+                  : electricityData.difference < 0
+                  ? 'bg-yellow-50 border border-yellow-200'
+                  : 'bg-gray-50 border border-gray-200'
+              }`}>
+                <div className="text-sm">
+                  {electricityData.difference > 0 ? (
+                    <>
+                      <span className="font-semibold text-blue-800">✅ Resultado Positivo:</span>
+                      <span className="text-blue-700"> Se cobró más de lo que se pagó. El propietario tiene una ganancia de ${formatCurrency(electricityData.difference)} en electricidad este mes.</span>
+                    </>
+                  ) : electricityData.difference < 0 ? (
+                    <>
+                      <span className="font-semibold text-yellow-800">⚠️ Resultado Negativo:</span>
+                      <span className="text-yellow-700"> Se cobró menos de lo que se pagó. El propietario debe contribuir ${formatCurrency(Math.abs(electricityData.difference))} para cubrir la diferencia.</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-gray-800">✓ Resultado Exacto:</span>
+                      <span className="text-gray-700"> El monto cobrado coincide exactamente con el monto pagado.</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {electricityData.reservationsCount === 0 && (
+                <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-600">
+                    ℹ️ No hay reservas con electricidad registradas en este período. 
+                    Las reservas deben ser completadas con datos de electricidad para aparecer en este reporte.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Expense Breakdown */}
           <div className="bg-white rounded-lg shadow p-6">
