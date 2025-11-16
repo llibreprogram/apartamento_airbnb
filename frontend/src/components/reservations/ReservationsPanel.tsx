@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 // @ts-ignore
 import { apiClient } from '@/services/api';
+import { CompleteReservationModal } from './CompleteReservationModal';
 
 interface Reservation {
   id: string;
@@ -40,6 +41,8 @@ export function ReservationsPanel() {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [refreshKey, setRefreshKey] = useState(0); // Force re-render key
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completingReservation, setCompletingReservation] = useState<Reservation | null>(null);
   const itemsPerPage = 10;
 
   // Formulario de nueva reservación
@@ -179,16 +182,41 @@ export function ReservationsPanel() {
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    // Si el nuevo estado es 'completed', abrir el modal de electricidad
+    if (newStatus === 'completed') {
+      const reservation = reservations.find(r => r.id === id);
+      if (reservation) {
+        setCompletingReservation(reservation);
+        setShowCompleteModal(true);
+      }
+      return;
+    }
+
     try {
       let endpoint = `/reservations/${id}`;
       if (newStatus === 'confirmed') endpoint += '/confirm';
-      else if (newStatus === 'completed') endpoint += '/complete';
       else if (newStatus === 'cancelled') endpoint += '/cancel';
 
       await apiClient.post(endpoint, {});
       fetchReservations(currentPage, filterStatus, filterProperty);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al actualizar reservación');
+    }
+  };
+
+  const handleCompleteReservation = async (electricityData: any) => {
+    if (!completingReservation) return;
+
+    try {
+      setSubmitting(true);
+      await apiClient.post(`/reservations/${completingReservation.id}/complete`, electricityData);
+      setShowCompleteModal(false);
+      setCompletingReservation(null);
+      fetchReservations(currentPage, filterStatus, filterProperty);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al completar reservación');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -995,6 +1023,20 @@ export function ReservationsPanel() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal de Completar Reserva con Electricidad */}
+      {completingReservation && (
+        <CompleteReservationModal
+          isOpen={showCompleteModal}
+          onClose={() => {
+            setShowCompleteModal(false);
+            setCompletingReservation(null);
+          }}
+          onComplete={handleCompleteReservation}
+          reservationId={completingReservation.id}
+          guestName={completingReservation.guestName}
+        />
       )}
     </div>
   );
