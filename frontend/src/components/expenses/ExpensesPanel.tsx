@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '@/services/api';
+import { CreateElectricityExpenseModal } from './CreateElectricityExpenseModal';
 
 interface Expense {
   id: string;
@@ -23,6 +24,8 @@ export const ExpensesPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showElectricityModal, setShowElectricityModal] = useState(false);
+  const [electricityPeriod, setElectricityPeriod] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [selectedProperty, setSelectedProperty] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -170,12 +173,27 @@ export const ExpensesPanel: React.FC = () => {
           <h2 className="text-2xl font-bold">Mis Gastos</h2>
           <p className="text-gray-500">Total: ${(totalExpenses || 0).toFixed(2)}</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        >
-          + Agregar Gasto
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const currentDate = new Date();
+              const period = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+              setElectricityPeriod(period);
+              setShowElectricityModal(true);
+            }}
+            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center gap-2"
+            disabled={!selectedProperty}
+            title={!selectedProperty ? 'Selecciona una propiedad primero' : 'Registrar factura de electricidad'}
+          >
+            ⚡ Electricidad
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            + Agregar Gasto
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -258,6 +276,19 @@ export const ExpensesPanel: React.FC = () => {
         <ExpenseForm
           onSubmit={handleFormSubmit}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {/* Electricity Expense Modal */}
+      {showElectricityModal && selectedProperty && electricityPeriod && (
+        <CreateElectricityExpenseModal
+          propertyId={selectedProperty}
+          propertyName={properties.find(p => p.id === selectedProperty)?.name || ''}
+          period={electricityPeriod}
+          onClose={() => setShowElectricityModal(false)}
+          onSuccess={() => {
+            fetchExpenses(currentPage, filterCategory, selectedProperty);
+          }}
         />
       )}
 
