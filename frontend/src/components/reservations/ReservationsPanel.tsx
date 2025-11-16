@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 // @ts-ignore
 import { apiClient } from '@/services/api';
 import { CompleteReservationModal } from './CompleteReservationModal';
-import { RegisterElectricityCostModal } from './RegisterElectricityCostModal';
 
 interface Reservation {
   id: string;
@@ -56,8 +55,6 @@ export function ReservationsPanel() {
   const [refreshKey, setRefreshKey] = useState(0); // Force re-render key
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completingReservation, setCompletingReservation] = useState<Reservation | null>(null);
-  const [showCostModal, setShowCostModal] = useState(false);
-  const [registeringCostReservation, setRegisteringCostReservation] = useState<Reservation | null>(null);
   const itemsPerPage = 10;
 
   // Formulario de nueva reservación
@@ -708,20 +705,7 @@ export function ReservationsPanel() {
                       <tr key={`${res.id}-electricity`} className="bg-blue-50 border-b">
                         <td colSpan={9} className="px-6 py-3">
                           <div className="text-sm">
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="font-semibold text-blue-800">⚡ Detalles de Electricidad</div>
-                              {!res.electricityActualCost && (
-                                <button
-                                  onClick={() => {
-                                    setRegisteringCostReservation(res);
-                                    setShowCostModal(true);
-                                  }}
-                                  className="px-3 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded font-semibold transition"
-                                >
-                                  📋 Registrar Costo Real
-                                </button>
-                              )}
-                            </div>
+                            <div className="font-semibold text-blue-800 mb-2">⚡ Electricidad Cobrada al Huésped</div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-gray-700">
                               <div>
                                 <span className="font-medium">Lectura Inicial:</span> {res.meterReadingStart} kWh
@@ -736,71 +720,21 @@ export function ReservationsPanel() {
                                 <span className="font-medium">Tarifa:</span> ${res.electricityRate}/kWh
                               </div>
                               <div>
-                                <span className="font-medium">Cobrado al Huésped:</span> 
+                                <span className="font-medium">Cobrado:</span> 
                                 <span className="text-blue-600 font-bold ml-1">${res.electricityCharge}</span>
                               </div>
                               <div>
                                 <span className="font-medium">Método Pago:</span> {res.electricityPaymentMethod || 'N/A'}
                               </div>
                               {res.electricityNotes && (
-                                <div className="col-span-2">
+                                <div className="col-span-2 md:col-span-4">
                                   <span className="font-medium">Notas:</span> {res.electricityNotes}
                                 </div>
                               )}
                             </div>
-                            
-                            {/* Costo Real Pagado por el Propietario */}
-                            {res.electricityActualCost && (
-                              <div className="mt-3 pt-3 border-t border-blue-200">
-                                <div className="font-semibold text-gray-800 mb-2">💰 Factura del Propietario:</div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-gray-700">
-                                  <div>
-                                    <span className="font-medium">Costo Real Pagado:</span> 
-                                    <span className="text-red-600 font-bold ml-1">${res.electricityActualCost}</span>
-                                  </div>
-                                  {res.electricityBillDate && (
-                                    <div>
-                                      <span className="font-medium">Fecha Factura:</span> {new Date(res.electricityBillDate).toLocaleDateString('es-ES')}
-                                    </div>
-                                  )}
-                                  {res.electricityBillNotes && (
-                                    <div className="col-span-2">
-                                      <span className="font-medium">Notas Factura:</span> {res.electricityBillNotes}
-                                    </div>
-                                  )}
-                                  <div className="col-span-2 md:col-span-4">
-                                    {(() => {
-                                      const diff = (res.electricityCharge || 0) - (res.electricityActualCost || 0);
-                                      if (diff > 0) {
-                                        return (
-                                          <div className="bg-green-100 border border-green-300 rounded px-3 py-2">
-                                            <span className="text-green-800 font-semibold">
-                                              ✅ Ganancia Admin: ${diff.toFixed(2)}
-                                            </span>
-                                          </div>
-                                        );
-                                      } else if (diff < 0) {
-                                        return (
-                                          <div className="bg-yellow-100 border border-yellow-300 rounded px-3 py-2">
-                                            <span className="text-yellow-800 font-semibold">
-                                              ⚠️ Propietario debe contribuir: ${Math.abs(diff).toFixed(2)}
-                                            </span>
-                                          </div>
-                                        );
-                                      } else {
-                                        return (
-                                          <div className="bg-gray-100 border border-gray-300 rounded px-3 py-2">
-                                            <span className="text-gray-800 font-semibold">
-                                              ✓ Exacto (sin diferencia)
-                                            </span>
-                                          </div>
-                                        );
-                                      }
-                                    })()}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                            <div className="mt-2 text-xs text-gray-600 italic">
+                              💡 El costo real se registra mensualmente en Gastos → Crear gasto de Electricidad
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -1162,26 +1096,6 @@ export function ReservationsPanel() {
           onComplete={handleCompleteReservation}
           reservationId={completingReservation.id}
           guestName={completingReservation.guestName}
-        />
-      )}
-
-      {/* Modal de Registrar Costo Real de Electricidad */}
-      {showCostModal && registeringCostReservation && (
-        <RegisterElectricityCostModal
-          reservation={{
-            id: registeringCostReservation.id,
-            guestName: registeringCostReservation.guestName,
-            electricityCharge: registeringCostReservation.electricityCharge || 0,
-            electricityConsumed: registeringCostReservation.electricityConsumed || 0,
-            electricityRate: registeringCostReservation.electricityRate || 0,
-          }}
-          onClose={() => {
-            setShowCostModal(false);
-            setRegisteringCostReservation(null);
-          }}
-          onSuccess={() => {
-            fetchReservations();
-          }}
         />
       )}
     </div>
