@@ -907,6 +907,13 @@ ${propertyExpenses.map(e => `${e.category},${e.amount}`).join('\n')}`;
                       ? (totalExpenses / grossIncome) * 100 
                       : 0,
                     expenseBreakdown: Array.isArray(propertyExpenses) ? propertyExpenses : [],
+                    electricityData: electricityData ? {
+                      totalCharged: ensureNumber(electricityData.totalCharged),
+                      totalPaid: ensureNumber(electricityData.totalPaid),
+                      difference: ensureNumber(electricityData.difference),
+                      reservationsCount: electricityData.reservationsCount || 0,
+                      expensesCount: electricityData.expensesCount || 0,
+                    } : undefined,
                   },
                   {
                     filename: `reporte-${getPropertyName().replace(/\s+/g, '-')}-${report.period}.pdf`,

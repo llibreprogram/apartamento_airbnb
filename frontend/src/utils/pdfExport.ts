@@ -73,6 +73,13 @@ export const generateFinancialReportPDF = (
     expenseBreakdown?: Array<{ category: string; amount: number }>;
     profitMargin?: number;
     expenseRatio?: number;
+    electricityData?: {
+      totalCharged: number;
+      totalPaid: number;
+      difference: number;
+      reservationsCount: number;
+      expensesCount: number;
+    };
   },
   options: {
     filename: string;
@@ -116,6 +123,15 @@ export const generateFinancialReportPDF = (
         amount: 'Monto',
         total: 'Total',
         generatedOn: 'Generado el',
+        electricityReport: '⚡ Reporte de Electricidad',
+        electricityCharged: 'Cobrado a Huéspedes',
+        electricityPaid: 'Pagado en Facturas',
+        electricityDifference: 'Diferencia',
+        electricityMargin: 'Margen',
+        electricityReservations: 'Reservas',
+        electricityExpenses: 'Gastos',
+        profitLabel: 'Ganancia',
+        lossLabel: 'Pérdida',
       },
       en: {
         title: 'Financial Report',
@@ -135,6 +151,15 @@ export const generateFinancialReportPDF = (
         amount: 'Amount',
         total: 'Total',
         generatedOn: 'Generated on',
+        electricityReport: '⚡ Electricity Report',
+        electricityCharged: 'Charged to Guests',
+        electricityPaid: 'Paid in Bills',
+        electricityDifference: 'Difference',
+        electricityMargin: 'Margin',
+        electricityReservations: 'Reservations',
+        electricityExpenses: 'Expenses',
+        profitLabel: 'Profit',
+        lossLabel: 'Loss',
       },
       ru: {
         title: 'Финансовый Отчет',
@@ -154,6 +179,15 @@ export const generateFinancialReportPDF = (
         amount: 'Сумма',
         total: 'Всего',
         generatedOn: 'Создано',
+        electricityReport: '⚡ Отчет об Электроэнергии',
+        electricityCharged: 'Взимано с Гостей',
+        electricityPaid: 'Оплачено по Счетам',
+        electricityDifference: 'Разница',
+        electricityMargin: 'Маржа',
+        electricityReservations: 'Бронирования',
+        electricityExpenses: 'Расходы',
+        profitLabel: 'Прибыль',
+        lossLabel: 'Убыток',
       },
     };
 
@@ -211,6 +245,49 @@ export const generateFinancialReportPDF = (
           ` : ''}
         </table>
 
+        ${data.electricityData ? `
+          <h2 style="font-size: 14px; margin: 20px 0 10px 0; border-bottom: 1px solid #666; padding-bottom: 5px; color: #f59e0b;">
+            ${escapeHtml(t.electricityReport)}
+          </h2>
+
+          <table style="width: 100%; margin: 10px 0; border-collapse: collapse;">
+            <tr style="background-color: #dcfce7;">
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityCharged)}:</td>
+              <td style="padding: 5px; text-align: right; color: #16a34a;"><strong>$${ensureNumber(data.electricityData.totalCharged).toFixed(2)}</strong></td>
+            </tr>
+            <tr style="background-color: #fee2e2;">
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityPaid)}:</td>
+              <td style="padding: 5px; text-align: right; color: #dc2626;"><strong>$${ensureNumber(data.electricityData.totalPaid).toFixed(2)}</strong></td>
+            </tr>
+            <tr style="background-color: ${ensureNumber(data.electricityData.difference) >= 0 ? '#dbeafe' : '#fef3c7'};">
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityDifference)}:</td>
+              <td style="padding: 5px; text-align: right; color: ${ensureNumber(data.electricityData.difference) >= 0 ? '#2563eb' : '#d97706'};"><strong>$${ensureNumber(data.electricityData.difference).toFixed(2)}</strong></td>
+            </tr>
+            ${ensureNumber(data.electricityData.totalPaid) > 0 ? `
+            <tr>
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityMargin)}:</td>
+              <td style="padding: 5px; text-align: right;">${(((ensureNumber(data.electricityData.totalCharged) / ensureNumber(data.electricityData.totalPaid)) - 1) * 100).toFixed(2)}%</td>
+            </tr>
+            ` : ''}
+            <tr style="background-color: #f5f5f5;">
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityReservations)}:</td>
+              <td style="padding: 5px; text-align: right;">${data.electricityData.reservationsCount || 0}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px; font-weight: bold;">${escapeHtml(t.electricityExpenses)}:</td>
+              <td style="padding: 5px; text-align: right;">${data.electricityData.expensesCount || 0}</td>
+            </tr>
+          </table>
+
+          <div style="margin-top: 10px; padding: 8px; background-color: ${ensureNumber(data.electricityData.difference) >= 0 ? '#e0f2fe' : '#fef9c3'}; border-left: 3px solid ${ensureNumber(data.electricityData.difference) >= 0 ? '#0284c7' : '#ca8a04'}; font-size: 12px;">
+            <strong>${ensureNumber(data.electricityData.difference) >= 0 ? escapeHtml(t.profitLabel) : escapeHtml(t.lossLabel)}:</strong>
+            ${ensureNumber(data.electricityData.difference) >= 0 
+              ? `Se cobró más de lo que se pagó. Ganancia de $${ensureNumber(data.electricityData.difference).toFixed(2)}` 
+              : `Se cobró menos de lo que se pagó. El propietario debe $${Math.abs(ensureNumber(data.electricityData.difference)).toFixed(2)}`
+            }
+          </div>
+        ` : ''}
+
         ${data.expenseBreakdown && Array.isArray(data.expenseBreakdown) && data.expenseBreakdown.length > 0 ? `
           <h2 style="font-size: 14px; margin: 15px 0 10px 0; border-bottom: 1px solid #666; padding-bottom: 5px;">
             ${escapeHtml(t.breakdown)}
@@ -253,9 +330,8 @@ export const generateFinancialReportPDF = (
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      canvas: null,
+      canvas: undefined,
       allowTaint: true,
-      letterRendering: true,
     }).then((canvas) => {
       // Remove temporary div
       document.body.removeChild(tempDiv);
