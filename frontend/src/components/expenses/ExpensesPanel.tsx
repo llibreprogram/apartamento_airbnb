@@ -173,27 +173,12 @@ export const ExpensesPanel: React.FC = () => {
           <h2 className="text-2xl font-bold">Mis Gastos</h2>
           <p className="text-gray-500">Total: ${(totalExpenses || 0).toFixed(2)}</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              const currentDate = new Date();
-              const period = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-              setElectricityPeriod(period);
-              setShowElectricityModal(true);
-            }}
-            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center gap-2"
-            disabled={!selectedProperty}
-            title={!selectedProperty ? 'Selecciona una propiedad primero' : 'Registrar factura de electricidad'}
-          >
-            ⚡ Electricidad
-          </button>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            + Agregar Gasto
-          </button>
-        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          + Agregar Gasto
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -276,6 +261,12 @@ export const ExpensesPanel: React.FC = () => {
         <ExpenseForm
           onSubmit={handleFormSubmit}
           onClose={() => setShowForm(false)}
+          onOpenElectricityModal={(propertyId, propertyName, period) => {
+            setShowForm(false);
+            setSelectedProperty(propertyId);
+            setElectricityPeriod(period);
+            setShowElectricityModal(true);
+          }}
         />
       )}
 
@@ -366,9 +357,10 @@ export const ExpensesPanel: React.FC = () => {
 interface ExpenseFormProps {
   onSubmit: (data: any) => void;
   onClose: () => void;
+  onOpenElectricityModal?: (propertyId: string, propertyName: string, period: string) => void;
 }
 
-const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
+const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose, onOpenElectricityModal }) => {
   const [formData, setFormData] = useState({
     propertyId: '',
     description: '',
@@ -398,6 +390,18 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Si se selecciona "electricity", abrir modal especial
+    if (name === 'category' && value === 'electricity' && onOpenElectricityModal && formData.propertyId) {
+      const currentDate = new Date();
+      const period = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+      const selectedProperty = properties.find(p => p.id === formData.propertyId);
+      
+      onClose(); // Cerrar este formulario
+      onOpenElectricityModal(formData.propertyId, selectedProperty?.name || '', period);
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: name === 'amount' ? parseFloat(value) : value,
@@ -492,7 +496,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
             >
               <option value="maintenance">Mantenimiento</option>
               <option value="utilities">Servicios</option>
-              <option value="electricity">Electricidad</option>
+              <option value="electricity">⚡ Electricidad (con resumen automático)</option>
               <option value="internet">Internet</option>
               <option value="condo_fees">Derecho de Condominio</option>
               <option value="cleaning">Limpieza</option>
@@ -503,6 +507,11 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSubmit, onClose }) => {
               <option value="paypal_commission">Comisión PayPal</option>
               <option value="other">Otros</option>
             </select>
+            {!formData.propertyId && (
+              <p className="text-blue-600 text-xs mt-1">
+                💡 Selecciona una propiedad primero para usar Electricidad
+              </p>
+            )}
           </div>
 
           <div>
