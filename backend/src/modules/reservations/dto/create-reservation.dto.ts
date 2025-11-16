@@ -156,3 +156,28 @@ export class CancelReservationDto {
   @IsOptional()
   cancellationReason?: string;
 }
+
+export class CompleteReservationDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  meterReadingStart?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  meterReadingEnd?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  electricityRate?: number; // $/kWh
+
+  @IsOptional()
+  @IsEnum(['cash', 'deposit', 'invoice', 'waived'])
+  electricityPaymentMethod?: string;
+
+  @IsOptional()
+  @IsString()
+  electricityNotes?: string;
+}

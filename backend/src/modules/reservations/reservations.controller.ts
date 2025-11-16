@@ -23,6 +23,7 @@ import {
   CreateReservationDto,
   UpdateReservationDto,
   CancelReservationDto,
+  CompleteReservationDto,
 } from './dto/create-reservation.dto';
 
 @ApiTags('Reservations')
@@ -161,12 +162,15 @@ export class ReservationsController {
   @Post(':id/complete')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mark reservation as completed (Admin)' })
+  @ApiOperation({ summary: 'Mark reservation as completed with optional electricity data (Admin)' })
   @ApiResponse({ status: 200, description: 'Reservation completed' })
   @ApiResponse({ status: 400, description: 'Cannot complete reservation' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  complete(@Param('id') id: string) {
-    return this.reservationsService.complete(id);
+  complete(
+    @Param('id') id: string,
+    @Body() completeDto?: CompleteReservationDto,
+  ) {
+    return this.reservationsService.complete(id, completeDto);
   }
 
   @Post(':id/cancel')

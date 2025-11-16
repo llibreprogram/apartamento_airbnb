@@ -77,6 +77,28 @@ export class Reservation {
   @Column('text', { nullable: true })
   cancellationReason: string;
 
+  // Campos de electricidad (registrados al completar reserva)
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  electricityConsumed: number; // kWh consumidos
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  electricityCharge: number; // Monto cobrado en USD
+
+  @Column('decimal', { precision: 6, scale: 4, nullable: true })
+  electricityRate: number; // Tarifa por kWh
+
+  @Column('integer', { nullable: true })
+  meterReadingStart: number; // Lectura inicial del medidor
+
+  @Column('integer', { nullable: true })
+  meterReadingEnd: number; // Lectura final del medidor
+
+  @Column('varchar', { length: 50, nullable: true })
+  electricityPaymentMethod: string; // cash, deposit, invoice, waived
+
+  @Column('text', { nullable: true })
+  electricityNotes: string; // Notas sobre el cobro de electricidad
+
   @CreateDateColumn()
   createdAt: Date;
 

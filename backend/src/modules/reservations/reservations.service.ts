@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, MoreThan, Not } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
-import { CreateReservationDto, UpdateReservationDto, CancelReservationDto } from './dto/create-reservation.dto';
+import { CreateReservationDto, UpdateReservationDto, CancelReservationDto, CompleteReservationDto } from './dto/create-reservation.dto';
 import { SeasonalPricingService } from '@/modules/properties/seasonal-pricing.service';
 import { PropertiesService } from '@/modules/properties/properties.service';
 
@@ -301,11 +301,37 @@ export class ReservationsService {
     return this.reservationsRepository.save(reservation);
   }
 
-  async complete(id: string) {
+  async complete(id: string, completeDto?: CompleteReservationDto) {
     const reservation = await this.findOne(id);
 
     if (reservation.status !== ReservationStatus.CONFIRMED) {
       throw new BadRequestException('Only confirmed reservations can be completed');
+    }
+
+    // Calcular datos de electricidad si se proporcionan las lecturas del medidor
+    if (completeDto?.meterReadingStart !== undefined && 
+        completeDto?.meterReadingEnd !== undefined && 
+        completeDto?.electricityRate !== undefined) {
+      
+      // Validar que la lectura final sea mayor que la inicial
+      if (completeDto.meterReadingEnd < completeDto.meterReadingStart) {
+        throw new BadRequestException('Final meter reading must be greater than or equal to initial reading');
+      }
+
+      // Calcular consumo en kWh
+      const consumed = completeDto.meterReadingEnd - completeDto.meterReadingStart;
+
+      // Calcular cargo total
+      const charge = consumed * completeDto.electricityRate;
+
+      // Guardar datos de electricidad en la reserva
+      reservation.meterReadingStart = completeDto.meterReadingStart;
+      reservation.meterReadingEnd = completeDto.meterReadingEnd;
+      reservation.electricityRate = completeDto.electricityRate;
+      reservation.electricityConsumed = consumed;
+      reservation.electricityCharge = charge;
+      reservation.electricityPaymentMethod = completeDto.electricityPaymentMethod || 'cash';
+      reservation.electricityNotes = completeDto.electricityNotes;
     }
 
     reservation.status = ReservationStatus.COMPLETED;
