@@ -196,15 +196,15 @@ export class ExpensesService {
     const reservations = await this.reservationsRepository
       .createQueryBuilder('reservation')
       .select([
-        'reservation.id as id',
-        'reservation.guestName as guestName',
-        'reservation.checkIn as checkIn',
-        'reservation.checkOut as checkOut',
-        'reservation.electricityConsumed as electricityConsumed',
-        'reservation.electricityCharge as electricityCharge',
-        'reservation.electricityRate as electricityRate',
-        'reservation.meterReadingStart as meterReadingStart',
-        'reservation.meterReadingEnd as meterReadingEnd',
+        'reservation.id',
+        'reservation.guestName',
+        'reservation.checkIn',
+        'reservation.checkOut',
+        'reservation.electricityConsumed',
+        'reservation.electricityCharge',
+        'reservation.electricityRate',
+        'reservation.meterReadingStart',
+        'reservation.meterReadingEnd',
       ])
       .where('reservation.propertyId = :propertyId', { propertyId })
       .andWhere('reservation.status = :status', { status: 'completed' })
@@ -212,35 +212,35 @@ export class ExpensesService {
       .andWhere('reservation.electricityCharge > 0')
       .andWhere('DATE(reservation.checkOut) >= :startDate', { startDate: startDate.toISOString().split('T')[0] })
       .andWhere('DATE(reservation.checkOut) <= :endDate', { endDate: endDate.toISOString().split('T')[0] })
-      .getRawMany();
+      .getMany();
 
-    console.log('Found reservations:', reservations.length);
+    console.log('Found reservations:', reservations.length, reservations.length > 0 ? reservations[0] : 'none');
 
     // Calcular totales
     const totalCharged = reservations.reduce((sum, res) => 
-      sum + parseFloat(res.electricityCharge || 0), 0
+      sum + (Number(res.electricityCharge) || 0), 0
     );
     
     const totalConsumed = reservations.reduce((sum, res) => 
-      sum + parseFloat(res.electricityConsumed || 0), 0
+      sum + (Number(res.electricityConsumed) || 0), 0
     );
 
     return {
       period,
       propertyId,
-      totalCharged: parseFloat(totalCharged.toFixed(2)),
-      totalConsumed: parseFloat(totalConsumed.toFixed(2)),
+      totalCharged: Number(totalCharged.toFixed(2)),
+      totalConsumed: Number(totalConsumed.toFixed(2)),
       reservationsCount: reservations.length,
       reservations: reservations.map(res => ({
         id: res.id,
         guestName: res.guestName,
         checkIn: res.checkIn,
         checkOut: res.checkOut,
-        electricityConsumed: parseFloat(res.electricityConsumed || 0),
-        electricityCharge: parseFloat(res.electricityCharge || 0),
-        electricityRate: parseFloat(res.electricityRate || 0),
-        meterReadingStart: parseInt(res.meterReadingStart || 0),
-        meterReadingEnd: parseInt(res.meterReadingEnd || 0),
+        electricityConsumed: Number(res.electricityConsumed) || 0,
+        electricityCharge: Number(res.electricityCharge) || 0,
+        electricityRate: Number(res.electricityRate) || 0,
+        meterReadingStart: Number(res.meterReadingStart) || 0,
+        meterReadingEnd: Number(res.meterReadingEnd) || 0,
       })),
     };
   }

@@ -55,8 +55,10 @@ export const CreateElectricityExpenseModal: React.FC<CreateElectricityExpenseMod
     try {
       setLoadingSummary(true);
       const response = await api.get(`/expenses/electricity-summary/${propertyId}/${period}`);
+      console.log('📊 Electricity Summary Response:', response.data);
       setSummary(response.data);
     } catch (err: any) {
+      console.error('❌ Error fetching electricity summary:', err);
       setError(err.response?.data?.message || 'Error al cargar resumen de electricidad');
     } finally {
       setLoadingSummary(false);
@@ -65,7 +67,9 @@ export const CreateElectricityExpenseModal: React.FC<CreateElectricityExpenseMod
 
   const calculateDifference = () => {
     if (!summary || !amount) return 0;
-    return summary.totalCharged - parseFloat(amount);
+    const totalCharged = Number(summary.totalCharged) || 0;
+    const amountPaid = parseFloat(amount) || 0;
+    return totalCharged - amountPaid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,7 +100,7 @@ export const CreateElectricityExpenseModal: React.FC<CreateElectricityExpenseMod
         notes,
         // Campos de electricidad
         electricityPeriod: period,
-        electricityTotalCharged: summary?.totalCharged || 0,
+        electricityTotalCharged: Number(summary?.totalCharged) || 0,
         electricityDifference: difference,
         electricityReservationsCount: summary?.reservationsCount || 0,
       });
@@ -154,19 +158,19 @@ export const CreateElectricityExpenseModal: React.FC<CreateElectricityExpenseMod
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="bg-white rounded p-3 text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    ${summary.totalCharged.toFixed(2)}
+                    ${(Number(summary.totalCharged) || 0).toFixed(2)}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">Total Cobrado</div>
                 </div>
                 <div className="bg-white rounded p-3 text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {summary.totalConsumed.toFixed(0)} kWh
+                    {(Number(summary.totalConsumed) || 0).toFixed(0)} kWh
                   </div>
                   <div className="text-xs text-gray-600 mt-1">Consumo Total</div>
                 </div>
                 <div className="bg-white rounded p-3 text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {summary.reservationsCount}
+                    {summary.reservationsCount || 0}
                   </div>
                   <div className="text-xs text-gray-600 mt-1">Reservas</div>
                 </div>
@@ -179,22 +183,30 @@ export const CreateElectricityExpenseModal: React.FC<CreateElectricityExpenseMod
                     Ver detalle de {summary.reservations.length} reserva(s)
                   </summary>
                   <div className="mt-2 space-y-2">
-                    {summary.reservations.map((res) => (
-                      <div key={res.id} className="bg-white rounded p-2 text-xs">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="font-medium">{res.guestName}</span>
-                            <span className="text-gray-500 ml-2">
-                              ({new Date(res.checkIn).toLocaleDateString()} - {new Date(res.checkOut).toLocaleDateString()})
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-green-600">${res.electricityCharge.toFixed(2)}</div>
-                            <div className="text-gray-500">{res.electricityConsumed} kWh × ${res.electricityRate}/kWh</div>
+                    {summary.reservations.map((res) => {
+                      const checkIn = res.checkIn ? new Date(res.checkIn).toLocaleDateString('es-ES') : 'N/A';
+                      const checkOut = res.checkOut ? new Date(res.checkOut).toLocaleDateString('es-ES') : 'N/A';
+                      const consumed = Number(res.electricityConsumed) || 0;
+                      const charge = Number(res.electricityCharge) || 0;
+                      const rate = Number(res.electricityRate) || 0;
+                      
+                      return (
+                        <div key={res.id} className="bg-white rounded p-2 text-xs">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <span className="font-medium">{res.guestName || 'Sin nombre'}</span>
+                              <span className="text-gray-500 ml-2">
+                                ({checkIn} - {checkOut})
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-green-600">${charge.toFixed(2)}</div>
+                              <div className="text-gray-500">{consumed.toFixed(0)} kWh × ${rate.toFixed(4)}/kWh</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </details>
               )}
