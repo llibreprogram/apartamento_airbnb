@@ -17,6 +17,14 @@ interface Reservation {
   totalPrice: number;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   createdAt: string;
+  // Campos de electricidad
+  electricityConsumed?: number;
+  electricityCharge?: number;
+  electricityRate?: number;
+  meterReadingStart?: number;
+  meterReadingEnd?: number;
+  electricityPaymentMethod?: string;
+  electricityNotes?: string;
 }
 
 interface Property {
@@ -595,6 +603,7 @@ export function ReservationsPanel() {
                       });
                     }
                     return (
+                    <>
                     <tr key={`${res.id}-${res.checkIn}-${res.checkOut}`} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4 font-semibold text-gray-900">{res.propertyName || res.propertyId}</td>
                       <td className="px-6 py-4 font-semibold text-gray-900">{res.guestName}</td>
@@ -606,7 +615,14 @@ export function ReservationsPanel() {
                         {res.checkOut.split('T')[0].split('-').reverse().join('/')}
                       </td>
                       <td className="px-6 py-4 text-gray-600 text-center">{res.numberOfGuests}</td>
-                      <td className="px-6 py-4 font-semibold text-green-600">${res.totalPrice}</td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-green-600">${res.totalPrice}</div>
+                        {res.status === 'completed' && res.electricityCharge && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            + ${res.electricityCharge} Electricidad
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(res.status)}`}>
                           {getStatusLabel(res.status)}
@@ -680,6 +696,43 @@ export function ReservationsPanel() {
                         </div>
                       </td>
                     </tr>
+                    {/* Detalles de electricidad (solo para reservas completadas con datos) */}
+                    {res.status === 'completed' && res.electricityConsumed && (
+                      <tr key={`${res.id}-electricity`} className="bg-blue-50 border-b">
+                        <td colSpan={9} className="px-6 py-3">
+                          <div className="text-sm">
+                            <div className="font-semibold text-blue-800 mb-2">⚡ Detalles de Electricidad:</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-gray-700">
+                              <div>
+                                <span className="font-medium">Lectura Inicial:</span> {res.meterReadingStart} kWh
+                              </div>
+                              <div>
+                                <span className="font-medium">Lectura Final:</span> {res.meterReadingEnd} kWh
+                              </div>
+                              <div>
+                                <span className="font-medium">Consumo:</span> {res.electricityConsumed} kWh
+                              </div>
+                              <div>
+                                <span className="font-medium">Tarifa:</span> ${res.electricityRate}/kWh
+                              </div>
+                              <div>
+                                <span className="font-medium">Cargo Total:</span> 
+                                <span className="text-blue-600 font-bold ml-1">${res.electricityCharge}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Método Pago:</span> {res.electricityPaymentMethod || 'N/A'}
+                              </div>
+                              {res.electricityNotes && (
+                                <div className="col-span-2">
+                                  <span className="font-medium">Notas:</span> {res.electricityNotes}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </>
                   );
                   })
                 )}
