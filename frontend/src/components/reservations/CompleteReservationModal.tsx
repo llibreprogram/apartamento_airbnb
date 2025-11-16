@@ -223,9 +223,9 @@ export const CompleteReservationModal: React.FC<CompleteReservationModalProps> =
             <button
               type="submit"
               disabled={
-                (meterReadingStart && !meterReadingEnd) ||
-                (!meterReadingStart && meterReadingEnd) ||
-                (meterReadingStart && meterReadingEnd && parseFloat(meterReadingEnd) < parseFloat(meterReadingStart))
+                (!!meterReadingStart && !meterReadingEnd) ||
+                (!meterReadingStart && !!meterReadingEnd) ||
+                (!!meterReadingStart && !!meterReadingEnd && parseFloat(meterReadingEnd) < parseFloat(meterReadingStart))
               }
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
