@@ -1,145 +1,114 @@
-# 💡 Flujo de Gestión de Electricidad
+# 🔌 Flujo de Electricidad - Sistema Basado en Gastos Mensuales
 
-## 📋 Resumen
+Este documento describe el flujo completo de gestión de electricidad en el sistema, desde el cobro a los huéspedes hasta el registro del costo real pagado mensualmente por el propietario.
 
-Sistema completo para gestionar el cobro de electricidad a huéspedes y el seguimiento del costo real pagado por los propietarios, incluyendo cálculo automático de diferencias y contribuciones.
+## 📋 Visión General
 
----
+El sistema permite:
+1. **Registrar lecturas** de contador al check-in y check-out de cada huésped
+2. **Calcular y cobrar** el consumo individual a cada huésped
+3. **Crear gasto mensual** de electricidad con resumen automático
+4. **Comparar automáticamente** total cobrado vs. factura real del mes
+5. **Generar reportes** de diferencias (ganancia o pérdida mensual)
 
-## 🔄 Flujo Completo
+## 🏗️ Arquitectura Nueva (Sistema Basado en Gastos)
 
-### **Paso 1: Huésped completa su estadía**
-1. Admin ve reserva en estado "Confirmada"
-2. Clic en botón **"✓ Completar"**
-3. Se abre modal de completar reserva con electricidad
+### ¿Por qué este cambio?
+**Realidad:** El propietario recibe UNA factura de electricidad al mes, no una por cada huésped.
 
-### **Paso 2: Registrar consumo de electricidad del huésped**
-En el modal, ingresar:
-- **Lectura inicial del medidor** (ej: 1000 kWh)
-- **Lectura final del medidor** (ej: 1150 kWh)
-- **Tarifa por kWh** (ej: $0.15/kWh)
-- **Método de pago** (efectivo, depósito, factura, exonerado)
-- **Notas** (opcional)
-
-El sistema calcula automáticamente:
-```
-Consumo = 1150 - 1000 = 150 kWh
-Cargo = 150 × $0.15 = $22.50
-```
-
-Opciones:
-- **"Completar Sin Electricidad"**: Marca como completada sin registrar electricidad
-- **"Completar y Cobrar $22.50"**: Registra electricidad y marca como completada
-
-### **Paso 3: Visualizar datos de electricidad**
-Una vez completada, la reserva muestra:
-- Fila expandida en color azul debajo de la reserva
-- Detalles: lecturas, consumo, tarifa, cargo al huésped
-- Botón: **"📋 Registrar Costo Real"** (si aún no se ha registrado)
-
-### **Paso 4: Registrar costo real pagado por propietario**
-1. Clic en **"📋 Registrar Costo Real"**
-2. Se abre modal para registrar factura del propietario
-3. Ingresar:
-   - **Costo Real Pagado** (ej: $18.50) - Lo que el propietario pagó a la compañía eléctrica
-   - **Fecha de Factura** (opcional)
-   - **Notas** (opcional, ej: "Factura #12345")
-
-El sistema calcula en tiempo real:
-```
-Diferencia = $22.50 (cobrado) - $18.50 (costo real) = $4.00
-Resultado: Ganancia Admin = $4.00
-```
-
-**Escenarios posibles:**
-
-#### ✅ **Caso 1: Ganancia para Admin**
-```
-Cobrado al huésped: $22.50
-Costo real pagado:  $18.50
-Diferencia:         +$4.00
-Resultado: ✅ Ganancia Admin: $4.00
-```
-
-#### ⚠️ **Caso 2: Propietario debe contribuir**
-```
-Cobrado al huésped: $15.00
-Costo real pagado:  $20.00
-Diferencia:         -$5.00
-Resultado: ⚠️ Propietario debe contribuir: $5.00
-```
-
-#### ✓ **Caso 3: Sin diferencia (exacto)**
-```
-Cobrado al huésped: $18.50
-Costo real pagado:  $18.50
-Diferencia:         $0.00
-Resultado: ✓ Exacto (sin diferencia)
-```
-
-### **Paso 5: Ver reporte completo**
-En la tabla de reservas, la fila expandida ahora muestra:
-
-**⚡ Detalles de Electricidad:**
-- Lectura Inicial: 1000 kWh
-- Lectura Final: 1150 kWh
-- Consumo: 150 kWh
-- Tarifa: $0.15/kWh
-- Cobrado al Huésped: $22.50
-- Método Pago: efectivo
-
-**💰 Factura del Propietario:**
-- Costo Real Pagado: $18.50
-- Fecha Factura: 15/11/2025
-- Notas Factura: Factura completa del mes
-- **✅ Ganancia Admin: $4.00**
+**Solución:** 
+- Se cobra a cada huésped individualmente (permanece igual)
+- Se crea UN gasto mensual de "Electricidad" que agrupa todas las reservas del período
+- El sistema calcula automáticamente: `Diferencia = Total Cobrado - Factura Real`
 
 ---
 
-## 📊 Reporte Financiero de Electricidad
+## 🔄 Flujo Paso a Paso
 
-### **Endpoint disponible:**
-```http
-GET /api/financials/electricity-report?propertyId=xxx&period=2025-11
+### 1️⃣ Completar Reserva con Electricidad
+
+**Acción:** Admin/Usuario navega a la reserva y presiona **"Completar Reserva"**
+
+**Formulario incluye:**
+- ✅ Lectura inicial del medidor (ejemplo: 1000 kWh)
+- ✅ Lectura final del medidor (ejemplo: 1150 kWh)
+- ✅ Tarifa de electricidad (ejemplo: $0.15/kWh)
+- ✅ Método de pago: cash, deposit, invoice, waived
+- ✅ Notas opcionales
+
+**Cálculo Automático:**
+```
+Consumo = LecturaFinal - LecturaInicial
+        = 1150 - 1000
+        = 150 kWh
+
+Cargo = Consumo × Tarifa
+      = 150 × 0.15
+      = $22.50
 ```
 
-### **Parámetros:**
-- `propertyId` (opcional): Filtrar por propiedad específica
-- `period` (opcional): Filtrar por período en formato `YYYY-MM`
+**Backend:** POST `/api/reservations/:id/complete`
 
-### **Respuesta:**
-```json
-{
-  "summary": {
-    "totalCharged": 450.75,        // Total cobrado a huéspedes
-    "totalActualCost": 380.25,     // Total pagado por propietarios
-    "totalOwnerContribution": 25.00, // Total que propietarios deben pagar
-    "totalAdminProfit": 95.50,     // Total ganancia del admin
-    "netElectricityResult": 70.50, // Resultado neto (charged - actualCost)
-    "pendingBills": 3,             // Reservas sin costo real registrado
-    "completedBills": 12           // Reservas con costo real registrado
-  },
-  "details": [
-    {
-      "id": "uuid-reserva",
-      "propertyId": "uuid-propiedad",
-      "guestName": "Juan Pérez",
-      "checkIn": "2025-11-01",
-      "checkOut": "2025-11-05",
-      "electricityConsumed": 150,
-      "electricityCharge": 22.50,
-      "electricityActualCost": 18.50,
-      "electricityRate": 0.15,
-      "difference": 4.00,
-      "ownerMustPay": 0,           // Si difference < 0, aquí aparece el monto
-      "adminProfit": 4.00,         // Si difference > 0, aquí aparece el monto
-      "billStatus": "registered",  // "registered" o "pending"
-      "electricityBillDate": "2025-11-10",
-      "electricityPaymentMethod": "cash"
-    }
-  ]
-}
+**Resultado:** 
+- Reserva completada con electricidad cobrada al huésped
+- Datos guardados en `reservations` table
+- ⚠️ El costo real NO se registra aquí (ver paso 2)
+
+---
+
+### 2️⃣ Crear Gasto Mensual de Electricidad
+
+**Cuándo:** Cuando el propietario recibe y paga la factura eléctrica mensual
+
+**Acción:** Admin navega a **Gastos** → selecciona propiedad → presiona **"⚡ Electricidad"**
+
+**El sistema automáticamente:**
+1. Detecta el período actual (YYYY-MM)
+2. Busca todas las reservas completadas con electricidad en ese mes
+3. Calcula: `Total Cobrado = Σ electricityCharge de todas las reservas`
+4. Muestra resumen con desglose de cada reserva
+
+**Formulario incluye:**
+- 📊 **Resumen automático:** Total cobrado, consumo total, # reservas
+- 📋 **Detalle expandible:** Lista de reservas con su electricidad
+- ✅ **Monto pagado** (factura real del propietario)
+- ✅ Fecha de pago
+- ✅ Descripción y notas
+
+**Backend:** 
+- GET `/api/expenses/electricity-summary/:propertyId/:period` (muestra resumen)
+- POST `/api/expenses` (crea el gasto)
+
+**Cálculo Automático:**
 ```
+Total Cobrado:  $450.75  (suma de 12 reservas)
+Factura Real:   $380.25  (monto ingresado)
+Diferencia:     $70.50   → ✅ Ganancia neta del mes
+```
+
+Si `Diferencia < 0`, significa que el propietario debe contribuir la diferencia.
+
+**Resultado:** 
+- Gasto creado en tabla `expenses` con campos de electricidad:
+  - `electricityPeriod`: "2025-11"
+  - `electricityTotalCharged`: 450.75
+  - `electricityDifference`: 70.50
+  - `electricityReservationsCount`: 12
+
+---
+
+### 3️⃣ Ver Reporte de Electricidad (Por Implementar)
+
+**Acción:** Admin navega a **Reportes Financieros** → sección **Electricidad**
+
+**Backend:** GET `/api/financials/electricity-report?period=YYYY-MM&propertyId=X`
+
+**El reporte mostrará:**
+- Total cobrado a huéspedes en el período
+- Total pagado en facturas (suma de gastos de electricidad)
+- Diferencia neta
+- Desglose por propiedad
+- Tendencias mensuales
 
 ---
 
@@ -147,7 +116,6 @@ GET /api/financials/electricity-report?propertyId=xxx&period=2025-11
 
 ### **Tabla: `reservations`**
 
-#### Campos de cobro al huésped:
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `electricityConsumed` | decimal(10,2) | kWh consumidos (calculado) |
@@ -158,12 +126,14 @@ GET /api/financials/electricity-report?propertyId=xxx&period=2025-11
 | `electricityPaymentMethod` | varchar(50) | cash, deposit, invoice, waived |
 | `electricityNotes` | text | Notas sobre el cobro |
 
-#### Campos de costo real (propietario):
+### **Tabla: `expenses`** (Nuevos Campos)
+
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `electricityActualCost` | decimal(10,2) | Costo real pagado por propietario en USD |
-| `electricityBillDate` | date | Fecha de la factura eléctrica |
-| `electricityBillNotes` | text | Notas sobre la factura |
+| `electricityPeriod` | varchar(7) | Período YYYY-MM |
+| `electricityTotalCharged` | decimal(10,2) | Total cobrado ese mes a huéspedes |
+| `electricityDifference` | decimal(10,2) | Diferencia (cobrado - pagado) |
+| `electricityReservationsCount` | integer | Número de reservas en ese período |
 
 ---
 
@@ -182,182 +152,127 @@ Body:
   "electricityPaymentMethod": "cash",
   "electricityNotes": "Consumo normal"
 }
+
+Response:
+{
+  "id": "uuid",
+  "electricityConsumed": 150,
+  "electricityCharge": 22.50,
+  "status": "completed"
+}
 ```
 
-### **2. Registrar costo real de electricidad**
+### **2. Obtener resumen de electricidad del mes**
 ```http
-POST /api/reservations/:id/register-electricity-cost
+GET /api/expenses/electricity-summary/:propertyId/:period
+Authorization: Bearer <token>
+
+Example:
+GET /api/expenses/electricity-summary/uuid-propiedad/2025-11
+
+Response:
+{
+  "propertyId": "uuid",
+  "propertyName": "Apartamento Centro",
+  "period": "2025-11",
+  "totalCharged": 450.75,
+  "totalConsumed": 3005,
+  "reservationsCount": 12,
+  "reservations": [
+    {
+      "id": "uuid",
+      "guestName": "Juan Pérez",
+      "checkIn": "2025-11-01",
+      "checkOut": "2025-11-05",
+      "electricityConsumed": 150,
+      "electricityRate": 0.15,
+      "electricityCharge": 22.50
+    }
+  ]
+}
+```
+
+### **3. Crear gasto de electricidad**
+```http
+POST /api/expenses
 Authorization: Bearer <token>
 
 Body:
 {
-  "electricityActualCost": 18.50,
-  "electricityBillDate": "2025-11-10",
-  "electricityBillNotes": "Factura completa del mes"
+  "propertyId": "uuid",
+  "description": "Pago factura electricidad",
+  "amount": 380.25,
+  "category": "utilities",
+  "date": "2025-11-15",
+  "notes": "Factura completa del mes",
+  "electricityPeriod": "2025-11",
+  "electricityTotalCharged": 450.75,
+  "electricityDifference": 70.50,
+  "electricityReservationsCount": 12
 }
 
 Response:
 {
-  "message": "Electricity cost registered successfully",
-  "data": {
-    "electricityCharged": 22.50,
-    "electricityActualCost": 18.50,
-    "difference": 4.00,
-    "ownerContribution": 0,
-    "adminProfit": 4.00
-  }
+  "id": "uuid",
+  "amount": 380.25,
+  "electricityDifference": 70.50,
+  "message": "Expense created successfully"
 }
 ```
 
-### **3. Obtener reporte de electricidad**
-```http
-GET /api/financials/electricity-report?propertyId=xxx&period=2025-11
-Authorization: Bearer <token>
+---
 
-Response: Ver sección "Reporte Financiero de Electricidad"
-```
+## 📊 Ejemplo de Flujo Completo
+
+### Escenario: Noviembre 2025
+
+**Reservas completadas:**
+1. Juan Pérez (Nov 1-5): 150 kWh → $22.50
+2. María García (Nov 6-10): 200 kWh → $30.00
+3. Pedro López (Nov 11-15): 180 kWh → $27.00
+4. Ana Martínez (Nov 16-20): 250 kWh → $37.50
+5. ... (8 reservas más)
+
+**Total cobrado a huéspedes:** $450.75
+
+**El propietario recibe factura:** $380.25
+
+**Admin crea gasto:**
+1. Va a Gastos → Selecciona propiedad → "⚡ Electricidad"
+2. Sistema muestra resumen: "$450.75 cobrados en 12 reservas"
+3. Admin ingresa: Monto pagado = $380.25
+4. Sistema calcula: Diferencia = $70.50 (ganancia)
+5. Admin guarda
+
+**Resultado:**
+- Gasto registrado en la BD
+- Propietario ve que hubo ganancia de $70.50 ese mes
+- En reportes financieros aparece la diferencia
 
 ---
 
-## 💼 Casos de Uso
+## ✅ Ventajas del Nuevo Sistema
 
-### **Caso 1: Propietario paga menos que lo cobrado**
-**Escenario:** Tarifa fija alta al huésped, factura real más baja
-
-```
-Huésped consume: 150 kWh
-Tarifa cobrada: $0.20/kWh
-Cobrado: 150 × $0.20 = $30.00
-
-Factura real del propietario: $25.00
-Diferencia: $30.00 - $25.00 = $5.00
-Resultado: ✅ Admin gana $5.00
-```
-
-**Acción:** Admin retiene $5.00 como ganancia
+1. **Realista:** Refleja cómo funciona en la vida real (una factura/mes)
+2. **Simple:** Un solo registro mensual vs. muchos registros por reserva
+3. **Claro:** Comparación directa de ingresos vs. gastos
+4. **Escalable:** Funciona con cualquier cantidad de reservas
+5. **Auditable:** Rastro claro de diferencias mes a mes
 
 ---
 
-### **Caso 2: Propietario paga más que lo cobrado**
-**Escenario:** Tarifa fija baja al huésped, factura real más alta
+## 🚀 Estado Actual
 
-```
-Huésped consume: 200 kWh
-Tarifa cobrada: $0.10/kWh
-Cobrado: 200 × $0.10 = $20.00
-
-Factura real del propietario: $28.00
-Diferencia: $20.00 - $28.00 = -$8.00
-Resultado: ⚠️ Propietario debe pagar $8.00
-```
-
-**Acción:** Propietario debe cubrir diferencia de $8.00
+- ✅ Backend: Campos en `expenses` agregados
+- ✅ Backend: Endpoint GET `/expenses/electricity-summary`
+- ✅ Backend: Migración creada
+- ✅ Frontend: Modal `CreateElectricityExpenseModal`
+- ✅ Frontend: Integración en `ExpensesPanel`
+- ✅ Frontend: Limpieza de UI obsoleta en `ReservationsPanel`
+- ⏳ Pendiente: Reporte financiero de electricidad
+- ⏳ Pendiente: Testing completo del flujo
 
 ---
 
-### **Caso 3: Huésped no paga, pero propietario sí**
-**Escenario:** Electricidad exonerada al huésped
-
-```
-Cobrado al huésped: $0.00 (waived)
-Factura real: $15.00
-Diferencia: -$15.00
-Resultado: ⚠️ Propietario debe pagar $15.00
-```
-
-**Acción:** Propietario cubre el costo completo
-
----
-
-## 📈 Métricas y Reportes
-
-### **Indicadores Clave:**
-1. **Total Cobrado vs Total Pagado**: Ver rentabilidad del sistema de electricidad
-2. **Ganancia Neta de Electricidad**: `totalCharged - totalActualCost`
-3. **% de Facturas Completadas**: `completedBills / (completedBills + pendingBills)`
-4. **Promedio de Contribución del Propietario**: Identificar propiedades con déficit
-5. **Promedio de Ganancia Admin**: Identificar propiedades rentables
-
-### **Dashboard sugerido:**
-```
-┌─────────────────────────────────────────────────┐
-│  Resumen de Electricidad - Noviembre 2025      │
-├─────────────────────────────────────────────────┤
-│  Total cobrado a huéspedes:      $450.75       │
-│  Total pagado por propietarios:  $380.25       │
-│  Ganancia neta:                  $70.50        │
-│                                                 │
-│  Propietarios deben contribuir:  $25.00        │
-│  Ganancia admin:                 $95.50        │
-│                                                 │
-│  Facturas pendientes:            3             │
-│  Facturas completadas:           12            │
-└─────────────────────────────────────────────────┘
-```
-
----
-
-## ✅ Checklist de Testing
-
-### **Flujo básico:**
-- [ ] Completar reserva sin electricidad
-- [ ] Completar reserva con electricidad (tarifa normal)
-- [ ] Ver detalles de electricidad en tabla
-- [ ] Registrar costo real igual al cobrado
-- [ ] Registrar costo real menor (ganancia admin)
-- [ ] Registrar costo real mayor (contribución propietario)
-
-### **Reportes:**
-- [ ] Obtener reporte general de electricidad
-- [ ] Filtrar reporte por propiedad
-- [ ] Filtrar reporte por período
-- [ ] Verificar cálculos de totales
-- [ ] Verificar conteo de facturas pendientes
-
-### **Edge cases:**
-- [ ] Completar con lecturas iguales (consumo 0)
-- [ ] Registrar costo $0.00
-- [ ] Intentar registrar costo sin haber completado con electricidad
-- [ ] Actualizar costo real después de registrado
-
----
-
-## 🚀 Próximas Mejoras
-
-### **Frontend:**
-1. ✅ **Vista de reporte de electricidad** - Página dedicada con gráficos
-2. ⬜ **Exportar reporte a PDF/Excel**
-3. ⬜ **Notificaciones de facturas pendientes**
-4. ⬜ **Dashboard de electricidad por propiedad**
-
-### **Backend:**
-1. ⬜ **Integración con API de compañía eléctrica** (automático)
-2. ⬜ **Alertas cuando diferencia > umbral**
-3. ⬜ **Histórico de cambios en costos**
-4. ⬜ **Predicción de consumo basado en histórico**
-
-### **Negocio:**
-1. ⬜ **Política de tarifas dinámicas** (verano vs invierno)
-2. ⬜ **Margen de ganancia configurable**
-3. ⬜ **Acuerdos con propietarios** (% de contribución)
-4. ⬜ **Facturación automática a propietarios**
-
----
-
-## 📞 Soporte
-
-**Preguntas frecuentes:**
-- ❓ ¿Qué pasa si no registro el costo real?
-  - El reporte mostrará como "pendiente" y no se calculará diferencia
-  
-- ❓ ¿Puedo modificar el costo real después?
-  - Sí, volver a llamar el endpoint con el ID de la reserva
-  
-- ❓ ¿Cómo se cobra la diferencia al propietario?
-  - El sistema solo calcula, el proceso de cobro es manual (por ahora)
-
-**Contacto:** dev@example.com
-
----
-
-**Última actualización:** 15 de Noviembre, 2025
+**Última actualización:** 16 de Noviembre, 2025
+**Autor:** Rafael Llibre
