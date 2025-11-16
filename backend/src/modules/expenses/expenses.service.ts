@@ -181,10 +181,18 @@ export class ExpensesService {
   async getElectricitySummary(propertyId: string, period: string) {
     // Parsear período YYYY-MM
     const [year, month] = period.split('-');
-    const startDate = new Date(`${year}-${month}-01`);
-    const endDate = new Date(parseInt(year), parseInt(month), 0); // Último día del mes
+    const yearNum = parseInt(year);
+    const monthNum = parseInt(month);
+    
+    // Primer día del mes
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    // Último día del mes (día 0 del mes siguiente = último día del mes actual)
+    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+
+    console.log('getElectricitySummary:', { propertyId, period, startDate, endDate });
 
     // Obtener todas las reservas completadas con electricidad en ese período
+    // Buscamos reservas cuyo checkOut esté dentro del período
     const reservations = await this.reservationsRepository
       .createQueryBuilder('reservation')
       .select([
@@ -201,9 +209,12 @@ export class ExpensesService {
       .where('reservation.propertyId = :propertyId', { propertyId })
       .andWhere('reservation.status = :status', { status: 'completed' })
       .andWhere('reservation.electricityCharge IS NOT NULL')
-      .andWhere('reservation.checkIn >= :startDate', { startDate })
-      .andWhere('reservation.checkOut <= :endDate', { endDate })
+      .andWhere('reservation.electricityCharge > 0')
+      .andWhere('DATE(reservation.checkOut) >= :startDate', { startDate: startDate.toISOString().split('T')[0] })
+      .andWhere('DATE(reservation.checkOut) <= :endDate', { endDate: endDate.toISOString().split('T')[0] })
       .getRawMany();
+
+    console.log('Found reservations:', reservations.length);
 
     // Calcular totales
     const totalCharged = reservations.reduce((sum, res) => 
