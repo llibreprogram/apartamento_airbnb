@@ -82,12 +82,12 @@ describe('ReservationsPanel', () => {
     });
   });
 
-  it('should confirm pending reservation', async () => {
+  it('should confirm pending reservation (check-in)', async () => {
     render(<ReservationsPanel />);
 
     await waitFor(() => {
-      const confirmButtons = screen.getAllByRole('button', { name: /confirmar/i });
-      fireEvent.click(confirmButtons[0]);
+      const checkInButtons = screen.getAllByRole('button', { name: /check-in/i });
+      fireEvent.click(checkInButtons[0]);
     });
 
     await waitFor(() => {

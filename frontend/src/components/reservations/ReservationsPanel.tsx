@@ -226,7 +226,7 @@ export function ReservationsPanel() {
       setCompletingReservation(null);
       fetchReservations(currentPage, filterStatus, filterProperty);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al completar reservación');
+      setError(err.response?.data?.message || 'Error al hacer check-out');
     } finally {
       setSubmitting(false);
     }
@@ -648,9 +648,9 @@ export function ReservationsPanel() {
                               <button
                                 onClick={() => handleStatusChange(res.id, 'confirmed')}
                                 className="px-3 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded font-semibold transition"
-                                title="Confirmar esta reserva"
+                                title="Hacer check-in"
                               >
-                                ✓ Confirmar
+                                ✓ Check-in
                               </button>
                               <button
                                 onClick={() => {
@@ -670,9 +670,9 @@ export function ReservationsPanel() {
                               <button
                                 onClick={() => handleStatusChange(res.id, 'completed')}
                                 className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded font-semibold transition"
-                                title="Marcar como completada"
+                                title="Hacer check-out"
                               >
-                                ✓ Completar
+                                ✓ Check-out
                               </button>
                               <button
                                 onClick={() => {
@@ -1085,7 +1085,7 @@ export function ReservationsPanel() {
         </div>
       )}
 
-      {/* Modal de Completar Reserva con Electricidad */}
+      {/* Modal de Check-out con Electricidad */}
       {completingReservation && (
         <CompleteReservationModal
           isOpen={showCompleteModal}

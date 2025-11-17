@@ -77,7 +77,7 @@ export class Reservation {
   @Column('text', { nullable: true })
   cancellationReason: string;
 
-  // Campos de electricidad (registrados al completar reserva)
+  // Campos de electricidad (registrados al hacer check-out)
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   electricityConsumed: number; // kWh consumidos
 

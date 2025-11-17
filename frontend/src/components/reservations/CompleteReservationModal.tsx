@@ -79,7 +79,7 @@ export const CompleteReservationModal: React.FC<CompleteReservationModalProps> =
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-blue-600 text-white px-6 py-4 rounded-t-lg">
-          <h2 className="text-xl font-bold">Completar Reserva</h2>
+          <h2 className="text-xl font-bold">Check-out de Reserva</h2>
           <p className="text-sm text-blue-100 mt-1">Huésped: {guestName}</p>
         </div>
 
@@ -217,7 +217,7 @@ export const CompleteReservationModal: React.FC<CompleteReservationModalProps> =
               onClick={handleCompleteWithoutElectricity}
               className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
             >
-              Completar Sin Electricidad
+              Check-out Sin Electricidad
             </button>
 
             <button
@@ -230,8 +230,8 @@ export const CompleteReservationModal: React.FC<CompleteReservationModalProps> =
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {meterReadingStart && meterReadingEnd
-                ? `Completar y Cobrar $${charge.toFixed(2)}`
-                : 'Completar Reserva'}
+                ? `Check-out y Cobrar $${charge.toFixed(2)}`
+                : 'Check-out'}
             </button>
           </div>
 
